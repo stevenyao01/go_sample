@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/tarm/goserial"
+	"github.com/go_sample/src/go-modbus/goserial"
 	"io"
 	"log"
 	"time"

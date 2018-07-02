@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/dpapathanasiou/go-modbus"
+	"github.com/go_sample/src/go-modbus"
 	"log"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	)
 
 	const (
-		defaultPort          = ""
+		defaultPort          = "/dev/ttyUSB0"
 		defaultSlave         = 1
 		defaultStartAddress  = 3030
 		defaultNumBytes      = 16
