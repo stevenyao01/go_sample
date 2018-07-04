@@ -12,6 +12,9 @@ import (
 	"strconv"
 )
 
+//
+var gClient modbus.Client
+
 // env map
 var EnvMap = make(map[string]string)
 var RtuDevice = "rtudevice"
@@ -33,8 +36,8 @@ const(
 	DefaultStopBits = "1"
 	DefaultSlaveId = "1"
 	DefaultSerialTimeout = "5"
-	DefaultAddress = "1104"
-	DefaultLen = "1"
+	DefaultAddress = "1105"
+	DefaultLen = "20"
 )
 
 const (
@@ -105,7 +108,7 @@ func byteToInt(results []byte) int32 {
 	return x
 }
 
-func main() {
+func initTest() {
 	initConfMap()
 	handler := modbus.NewRTUClientHandler(EnvMap[RtuDevice])
 	baudRate, _ := strconv.Atoi(EnvMap[BaudRate])
@@ -128,25 +131,39 @@ func main() {
 
 	client := modbus.NewClient(handler)
 
+	gClient = client
+}
+
+func getModbusValue(client modbus.Client) []string {
 	var i uint16
 	inputLen, _ := strconv.ParseInt(EnvMap[Len], 10, 16)
 	len := uint16(inputLen)
 	inputAddr, _ := strconv.Atoi(EnvMap[Address])
 	address := uint16(inputAddr)
-	log.Println("len: ", len)
-	for i=1; i<20; i++{
-		results, err := client.ReadHoldingRegisters(address + i, 1)
+	//log.Println("len: ", len)
+	myS1 := make([]string, len)
+	for i=0; i<len; i++ {
+		results, err := gClient.ReadHoldingRegisters(address+i, 1)
 		if err == nil {
-			log.Println("label = ", i)
+			//log.Println("label = ", i)
 		} else {
 			log.Println("err: ", err)
 		}
 
-		u8 := []uint8{0, 0, 0, results[0]}
-		a := byteToInt(u8)
-		u9 := []uint8{0, 0, 0, results[1]}
-		b  := byteToInt(u9)
-		var temperature = float32((a * 256) + b) / 100
-		log.Println("temperature: ", temperature)
+		a := byteToInt([]uint8{0, 0, 0, results[0]})
+		b := byteToInt([]uint8{0, 0, 0, results[1]})
+		var temperature = float64((a*256)+b) / 100
+		//log.Println("temperature: ", temperature)
+		myS1[i] = strconv.FormatFloat(temperature, 'f', 2, 64)
 	}
+	return myS1
+}
+
+func main() {
+
+	initTest()
+
+	array := getModbusValue(gClient)
+
+	log.Println("array: ", array)
 }
