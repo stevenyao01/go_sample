@@ -22,7 +22,8 @@ func main() {
 	const (
 		defaultPort          = "/dev/ttyUSB0"
 		defaultSlave         = 1
-		defaultStartAddress  = 3030
+		//defaultStartAddress  = 3030
+		defaultStartAddress  = 0x451
 		defaultNumBytes      = 16
 		defaultBaudRate      = 9600
 		defaultResponsePause = 300
