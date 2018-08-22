@@ -8,8 +8,8 @@ import (
 
 func main() {
 	log.Info("test!!!")
-	log.Info("float=", header.FLOAT)
-	log.Info("SNAPPY=", header.SNAPPY)
-	log.Info("BITMAP=", header.BITMAP)
-	log.Info("mqtt config = ", header.MQTT_CONF)
+	log.Info("float=%d", header.FLOAT)
+	log.Info("SNAPPY=%d", header.SNAPPY)
+	log.Info("BITMAP=%d", header.BITMAP)
+	log.Info("mqtt config = %s", header.MQTT_CONF)
 }
