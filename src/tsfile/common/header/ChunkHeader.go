@@ -7,12 +7,15 @@ const (
 
 // TsDataType
 const (
-	BOOLEAN = iota  // 0
-	INT32			// 1
-	INT64			// 2
-	FLOAT			// 3
-	DOUBLE			// 4
-	TEXT			// 5
+	BOOLEAN = iota  		// 0
+	INT32					// 1
+	INT64					// 2
+	FLOAT					// 3
+	DOUBLE					// 4
+	TEXT					// 5
+	FIXED_LEN_BYTE_ARRAY	// 6
+	ENUMS					// 7
+	BIGDECIMAL				// 8
 )
 
 // CompressionType

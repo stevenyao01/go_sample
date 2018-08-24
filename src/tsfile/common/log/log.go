@@ -41,7 +41,7 @@ func Info(s string,v ...interface{}) {
 		return	
 	}
 	fmt.Print("\033[34m")
-	fmt.Print(tag)
+	//fmt.Print(tag)
 	//log.SetFlags(log.Lshortfile)
 	log.Print("  INFO: ",fmt.Sprintf(s,v...))
 	fmt.Print("\033[0m")

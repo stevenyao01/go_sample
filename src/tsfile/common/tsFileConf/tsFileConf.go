@@ -65,7 +65,7 @@ const (
 	sdtMaxError uint64 = 100
 
 	// Default DFT satisfy rate is 0.1
-	dftSatisfyRate uint64 = 0.1
+	//dftSatisfyRate uint64 = 0.1
 
 
 	// Data compression method, TsFile supports UNCOMPRESSED or SNAPPY.
@@ -94,3 +94,7 @@ const (
 
 	MAGIC_STRING = "TsFilev0.8.0"
 )
+
+func GetMagic() string{
+	return MAGIC_STRING
+}
