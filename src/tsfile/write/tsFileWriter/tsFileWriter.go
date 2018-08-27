@@ -22,8 +22,8 @@ type TsFileWriter struct {
 	tsFile 	*os.File
 }
 
-func (t *TsFileWriter) AddMeasurement(md sensorDescriptor.SensorDescriptor) ([]byte) {
- 	log.Info("enter tsFileWriter->AddMeasurement()")
+func (t *TsFileWriter) AddSensor(sd sensorDescriptor.SensorDescriptor) ([]byte) {
+ 	log.Info("enter tsFileWriter->AddSensor()")
  	return nil
 }
 

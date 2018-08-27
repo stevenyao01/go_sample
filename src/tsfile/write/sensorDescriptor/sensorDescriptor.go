@@ -24,20 +24,20 @@ type SensorDescriptor struct {
 	//props 				make(map[string]string)
 }
 
-//func (m *SensorDescriptor) Write(v []byte) ([]byte,error) {
+//func (s *SensorDescriptor) Write(v []byte) ([]byte,error) {
 //	return nil,nil
 //}
 //
-//func (m *SensorDescriptor) Close() (bool) {
+//func (s *SensorDescriptor) Close() (bool) {
 //	return true
 //}
 
 
-func New(mId string, tdt int, te int) (*SensorDescriptor, error) {
+func New(sId string, tdt int, te int) (*SensorDescriptor, error) {
 	// todo do measurement init and memory check
 
 	return &SensorDescriptor{
-		sensorId:mId,
+		sensorId:sId,
 		tsDataType:tdt,
 		tsEncoding:te,
 		},nil

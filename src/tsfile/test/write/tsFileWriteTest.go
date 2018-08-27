@@ -10,15 +10,26 @@ import (
 
 func main(){
 
+	// init tsFileWriter
 	tfWriter, tfwErr := tsFileWriter.NewIoWriter()
 	if tfwErr != nil {
 		log.Info("init tsFileWriter error = %s", tfwErr)
 	}
-	md, mdErr := sensorDescriptor.New("cpu_utility", header.FLOAT, header.TS_2DIFF)
-	if mdErr != nil {
-		log.Info("init sensorDescriptor error = %s", mdErr)
+
+	// init sensorDescriptor
+	sd, sdErr := sensorDescriptor.New("cpu_utility", header.FLOAT, header.TS_2DIFF)
+	if sdErr != nil {
+		log.Info("init sensorDescriptor error = %s", sdErr)
 	}
-	tfWriter.AddMeasurement(*md)
+
+	// add sensorDescriptor to tfFileWriter
+	tfWriter.AddSensor(*sd)
+
+	// todo create a tsRecord
+
+	// todo write tsRecord to file
 	tfWriter.Write([]byte("&TsFileData&"))
+
+	// close file descriptor
 	tfWriter.Close()
 }
