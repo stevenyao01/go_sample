@@ -1,5 +1,13 @@
 package dataPoint
 
+/**
+ * @Package Name: dataPoint
+ * @Author: steven yao
+ * @Email:  yhp.linux@gmail.com
+ * @Create Date: 18-8-28 下午4:52
+ * @Description:
+ */
+
 import (
 )
 
@@ -11,10 +19,10 @@ import (
  * @Description:
  */
 
-type IntDataPoint struct {
+type FloatDataPoint struct {
 	sensorId			string
 	tsDataType			int
-	value 				int
+	value 				float32
 }
 
 //func (d *DataPoint) Write(v []byte) ([]byte,error) {
@@ -26,31 +34,7 @@ type IntDataPoint struct {
 //}
 
 
-func NewInt(sId string, tdt int, val int) (*DataPoint, error) {
-
-	//switch tdt {
-	//case 0:
-	//	// bool
-	//case 1:
-	//	//
-	//case 2:
-	//	//
-	//case 3:
-	//	//
-	//case 4:
-	//	//
-	//case 5:
-	//	//
-	//case 6:
-	//	//
-	//case 7:
-	//	//
-	//case 8:
-	//	//
-	//default:
-	//	// int
-	//}
-
+func NewFloat(sId string, tdt int, val float32) (*DataPoint, error) {
 	// todo
 	return &DataPoint{
 		sensorId:sId,

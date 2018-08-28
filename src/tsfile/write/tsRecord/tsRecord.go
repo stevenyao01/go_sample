@@ -9,44 +9,44 @@ package tsRecord
  */
 
 import (
-//"github.com/go_sample/src/tsfile/common/log"
 	"time"
 	"container/list"
 	"sync"
+	"github.com/go_sample/src/tsfile/write/dataPoint"
 )
 
 type TsRecord struct {
-	time				time.Duration
-	deviceId			string
-	dataPointList		*list.List
+	Time				time.Time
+	DeviceId			string
+	DataPointList		*list.List
 	m 					sync.Mutex
 }
 
 
-func (t *TsRecord) SetTime(time time.Duration) () {
-	t.time = time
+func (t *TsRecord) SetTime(time time.Time) () {
+	t.Time = time
 	return
 }
 
-func (t *TsRecord) addTuple(tuple DataPoint) () {
-	pushBack(t, tuple)
+func (t *TsRecord) AddTuple(tuple dataPoint.DataPoint) () {
+	PushBack(t, tuple)
 	return
 }
 
-func pushBack(t *TsRecord, tuple DataPoint) {
-	if tuple == nil {
-		return
-	}
+func PushBack(t *TsRecord, tuple dataPoint.DataPoint) {
+	//if tuple != nil {
+	//	return
+	//}
 	t.m.Lock()
 	defer t.m.Unlock()
-	t.dataPointList.PushBack(tuple)
+	t.DataPointList.PushBack(tuple)
 	return
 }
 
 func front(t *TsRecord) *list.Element {
 	t.m.Lock()
 	defer t.m.Unlock()
-	return t.dataPointList.Front()
+	return t.DataPointList.Front()
 }
 
 func remove(t *TsRecord, element *list.Element) {
@@ -55,7 +55,7 @@ func remove(t *TsRecord, element *list.Element) {
 	}
 	t.m.Lock()
 	defer t.m.Unlock()
-	t.dataPointList.Remove(element)
+	t.DataPointList.Remove(element)
 }
 
 // this remove has some issue, we cann't use as the follow:
@@ -84,16 +84,16 @@ func remove(t *TsRecord, element *list.Element) {
 func len(t *TsRecord) int {
 	t.m.Lock()
 	defer t.m.Unlock()
-	return t.dataPointList.Len()
+	return t.DataPointList.Len()
 }
 
 
-func New(t time.Duration, dId string) (*TsRecord, error) {
+func New(t time.Time, dId string) (*TsRecord, error) {
 	// todo
 
 	return &TsRecord{
-		time:t,
-		deviceId:dId,
-		dataPointList:list.New(),
+		Time:t,
+		DeviceId:dId,
+		DataPointList:list.New(),
 	},nil
 }
