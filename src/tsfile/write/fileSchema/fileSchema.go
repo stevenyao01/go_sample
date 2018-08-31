@@ -9,7 +9,6 @@ package fileSchema
  */
 
 import (
-//"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
 )
 
@@ -18,11 +17,11 @@ type FileSchema struct {
 	additionalProperties	map[string]string
 }
 
-//func (s *FileSchema) Write(v []byte) ([]byte,error) {
-//	return nil,nil
-//}
-//
-//func (s *FileSchema) Close() (bool) {
+func (f *FileSchema) GetSensorDescriptiorMap() (map[string]sensorDescriptor.SensorDescriptor) {
+	return f.sensorDescriptorMap
+}
+
+//func (f *FileSchema) Close() (bool) {
 //	return true
 //}
 

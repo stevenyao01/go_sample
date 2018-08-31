@@ -10,53 +10,67 @@ package tsRecord
 
 import (
 	"time"
-	"container/list"
 	"sync"
 	"github.com/go_sample/src/tsfile/write/dataPoint"
 )
 
 type TsRecord struct {
-	Time				time.Time
-	DeviceId			string
-	DataPointList		*list.List
+	time				time.Time
+	deviceId			string
+	dataPointMap		map[string]dataPoint.DataPoint
 	m 					sync.Mutex
 }
 
 
 func (t *TsRecord) SetTime(time time.Time) () {
-	t.Time = time
+	t.time = time
 	return
 }
 
 func (t *TsRecord) AddTuple(tuple dataPoint.DataPoint) () {
-	PushBack(t, tuple)
+	//PushBack(t, tuple)
+	t.dataPointMap[t.deviceId] = tuple
 	return
 }
 
-func PushBack(t *TsRecord, tuple dataPoint.DataPoint) {
-	//if tuple != nil {
-	//	return
-	//}
-	t.m.Lock()
-	defer t.m.Unlock()
-	t.DataPointList.PushBack(tuple)
-	return
+func (t *TsRecord) GetTime() (time.Time) {
+	return t.time
 }
 
-func front(t *TsRecord) *list.Element {
-	t.m.Lock()
-	defer t.m.Unlock()
-	return t.DataPointList.Front()
+func (t *TsRecord) GetDeviceId() (string) {
+	return t.deviceId
 }
 
-func remove(t *TsRecord, element *list.Element) {
-	if element == nil {
-		return
-	}
-	t.m.Lock()
-	defer t.m.Unlock()
-	t.DataPointList.Remove(element)
+func (t *TsRecord) GetDataPointMap() (map[string]dataPoint.DataPoint) {
+	return t.dataPointMap
 }
+
+//func PushBack(t *TsRecord, tuple dataPoint.DataPoint) {
+//	//if tuple != nil {
+//	//	return
+//	//}
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	t.DataPointList.PushBack(tuple)
+//	return
+//}
+//
+//func front(t *TsRecord) *list.Element {
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	return t.DataPointList.Front()
+//}
+//
+//func remove(t *TsRecord, element *list.Element) {
+//	if element == nil {
+//		return
+//	}
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	t.DataPointList.Remove(element)
+//}
+
+
 
 // this remove has some issue, we cann't use as the follow:
 //for e := l.Front(); e != nil; e = e.Next {
@@ -80,12 +94,12 @@ func remove(t *TsRecord, element *list.Element) {
 //		}
 //		list.remove(element)
 //	}
-
-func len(t *TsRecord) int {
-	t.m.Lock()
-	defer t.m.Unlock()
-	return t.DataPointList.Len()
-}
+//
+//func len(t *TsRecord) int {
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	return t.DataPointList.Len()
+//}
 
 
 func New(t time.Time, dId string) (*TsRecord, error) {
@@ -94,6 +108,6 @@ func New(t time.Time, dId string) (*TsRecord, error) {
 	return &TsRecord{
 		Time:t,
 		DeviceId:dId,
-		DataPointList:list.New(),
+		DataPointMap:make(map[string]dataPoint.DataPoint),
 	},nil
 }

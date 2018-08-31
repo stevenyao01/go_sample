@@ -9,10 +9,10 @@ const (
 
 const (
 	// Memory size threshold for flushing to disk or HDFS, default value is 128MB
-	groupSizeInByte = 128 * 1024 * 1024
+	GroupSizeInByte = 128 * 1024 * 1024
 
 	// The memory size for each series writer to pack page, default value is 64KB
-	pageSizeInByte = 64 * 1024
+	PageSizeInByte = 64 * 1024
 
 	// The maximum number of data points in a page, defalut value is 1024 * 1024
 	maxNumberOfPointsInPage = 1024 * 1024

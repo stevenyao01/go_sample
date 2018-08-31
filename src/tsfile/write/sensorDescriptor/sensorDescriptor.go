@@ -19,18 +19,23 @@ type SensorDescriptor struct {
 
 	//typeConverter		TsDataTypeConverter
 	//encodingConverter	TsEncodingConverter
-	//compressor		Compressor
+	compressor		Compressor
 	//conf 				TsFileConfig
 	//props 				make(map[string]string)
 }
 
-//func (s *SensorDescriptor) Write(v []byte) ([]byte,error) {
-//	return nil,nil
-//}
-//
-//func (s *SensorDescriptor) Close() (bool) {
-//	return true
-//}
+func (s *SensorDescriptor) GetSensorId() (string) {
+	return s.sensorId
+}
+
+// todo the return type should be Compressor, after finished Compressor we should modify it.
+func (s *SensorDescriptor) GetCompressor() (string) {
+	return s.compressor
+}
+
+func (s *SensorDescriptor) Close() (bool) {
+	return true
+}
 
 
 func New(sId string, tdt int, te int) (*SensorDescriptor, error) {
