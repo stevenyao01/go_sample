@@ -15,7 +15,7 @@ const (
 	PageSizeInByte = 64 * 1024
 
 	// The maximum number of data points in a page, defalut value is 1024 * 1024
-	maxNumberOfPointsInPage = 1024 * 1024
+	MaxNumberOfPointsInPage = 1024 * 1024
 
 	// Data type for input timestamp, TsFile supports INT32 or INT64
 	timeSeriesDataType = "INT64"

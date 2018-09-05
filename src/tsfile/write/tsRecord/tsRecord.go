@@ -15,7 +15,7 @@ import (
 )
 
 type TsRecord struct {
-	time				time.Time
+	time				int64
 	deviceId			string
 	dataPointMap		map[string]dataPoint.DataPoint
 	m 					sync.Mutex
@@ -23,7 +23,7 @@ type TsRecord struct {
 
 
 func (t *TsRecord) SetTime(time time.Time) () {
-	t.time = time
+	t.time = time.Unix()
 	return
 }
 
@@ -33,7 +33,7 @@ func (t *TsRecord) AddTuple(tuple dataPoint.DataPoint) () {
 	return
 }
 
-func (t *TsRecord) GetTime() (time.Time) {
+func (t *TsRecord) GetTime() (int64) {
 	return t.time
 }
 
@@ -106,8 +106,8 @@ func New(t time.Time, dId string) (*TsRecord, error) {
 	// todo
 
 	return &TsRecord{
-		Time:t,
-		DeviceId:dId,
-		DataPointMap:make(map[string]dataPoint.DataPoint),
+		time:t.Unix(),
+		deviceId:dId,
+		dataPointMap:make(map[string]dataPoint.DataPoint),
 	},nil
 }

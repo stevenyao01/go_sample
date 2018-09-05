@@ -29,7 +29,6 @@ public class Worker {
 	 */
     
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
         JSONObject jsonObj=new JSONObject();
         jsonObj.put("Name","liangyongs");
         jsonObj.put("Id", 31);

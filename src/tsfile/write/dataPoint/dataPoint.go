@@ -29,35 +29,12 @@ func (d *DataPoint) GetSensorId() (string) {
 	return d.sensorId
 }
 
-func (d *DataPoint) Write(t time.Time, sd seriesWriter.SeriesWriter) (bool) {
+func (d *DataPoint) Write(t int64, sd seriesWriter.SeriesWriter) (bool) {
 	if sd.GetTsDeviceId() == "" {
 		log.Info("give seriesWriter is null, do nothing and return.")
 		return false
 	}
 	sd.Write(t, d.value)
-	//tdt := sd.GetTsDataType()
-	//switch tdt {
-	//case 0:
-	//	// bool
-	//case 1:
-	//	//
-	//case 2:
-	//	//
-	//case 3:
-	//	//
-	//case 4:
-	//	//
-	//case 5:
-	//	//
-	//case 6:
-	//	//
-	//case 7:
-	//	//
-	//case 8:
-	//	//
-	//default:
-	//	// int
-	//}
 	return true
 }
 

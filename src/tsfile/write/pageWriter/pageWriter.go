@@ -24,9 +24,10 @@ type PageWriter struct {
 	minTimestamp		int64
 }
 
-//func (s *PageWriter) GetSensorId() (string) {
-//	return s.sensorId
-//}
+func (s *PageWriter) WritePageHeaderAndDataIntoBuff() (int) {
+	//
+	return 0
+}
 //
 //func (s *PageWriter) Close() (bool) {
 //	return true

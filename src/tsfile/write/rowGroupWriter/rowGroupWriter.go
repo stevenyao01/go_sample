@@ -12,7 +12,6 @@ import (
 //"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/seriesWriter"
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
-	"time"
 	"github.com/go_sample/src/tsfile/write/dataPoint"
 	"github.com/go_sample/src/tsfile/common/utils"
 	"github.com/go_sample/src/tsfile/common/log"
@@ -30,7 +29,7 @@ func (r *RowGroupWriter) AddSeriesWriter(sd sensorDescriptor.SensorDescriptor, p
 		pw, _ := pageWriter.New(sd)
 
 		// new serieswrite
-		sw, _ := seriesWriter.New(r.deviceId, sd, pw, pageSize)
+		sw, _ := seriesWriter.New(r.deviceId, sd, *pw, pageSize)
 
 		r.dataSeriesWriters[sd.GetSensorId()] = *sw
 	} else {
@@ -39,7 +38,7 @@ func (r *RowGroupWriter) AddSeriesWriter(sd sensorDescriptor.SensorDescriptor, p
 	return
 }
 
-func (r *RowGroupWriter) Write(t time.Time, data map[string]dataPoint.DataPoint) () {
+func (r *RowGroupWriter) Write(t int64, data map[string]dataPoint.DataPoint) () {
 	for _, v := range data {
 		if ok, _ := utils.MapContains(r.dataSeriesWriters, v.GetSensorId()); ok {
 			v.Write(t, r.dataSeriesWriters[v.GetSensorId()])
