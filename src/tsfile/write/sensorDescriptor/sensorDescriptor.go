@@ -14,8 +14,8 @@ import (
 
 type SensorDescriptor struct {
 	sensorId			string
-	tsDataType			int
-	tsEncoding			int
+	tsDataType			int16
+	tsEncoding			int16
 
 	//typeConverter		TsDataTypeConverter
 	//encodingConverter	TsEncodingConverter
@@ -26,6 +26,14 @@ type SensorDescriptor struct {
 
 func (s *SensorDescriptor) GetSensorId() (string) {
 	return s.sensorId
+}
+
+func (s *SensorDescriptor) GetTsDataType() (int16) {
+	return s.tsDataType
+}
+
+func (s *SensorDescriptor) GetTsEncoding() (int16) {
+	return s.tsEncoding
 }
 
 // todo the return type should be Compressor, after finished Compressor we should modify it.

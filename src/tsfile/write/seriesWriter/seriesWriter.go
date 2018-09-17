@@ -17,6 +17,8 @@ import (
 	"github.com/go_sample/src/tsfile/write/valueWriter"
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
 	"github.com/go_sample/src/tsfile/common/log"
+	"github.com/go_sample/src/tsfile/write/statistics"
+	"github.com/go_sample/src/tsfile/write/tsFileWriter"
 )
 
 type SeriesWriter struct {
@@ -69,6 +71,13 @@ func (s *SeriesWriter) Write(t int64, value interface{}) (bool) {
 	return true
 }
 
+func (s *SeriesWriter) WriteToFileWriter (tsFileIoWriter *tsFileWriter.TsFileIoWriter) () {
+	s.pageWriter.WriteAllPagesOfSeriesToTsFile(tsFileIoWriter, s.seriesStatistics, s.numOfPages)
+	s.pageWriter.Reset()
+	// reset series_statistics
+	s.seriesStatistics = *statistics.GetStatistics(s.tsDataType)
+}
+
 func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 	if s.valueCount == tsFileConf.MaxNumberOfPointsInPage {
 		log.Info("current line count reaches the upper bound, write page %s", s.sensorDescriptor)
@@ -88,7 +97,7 @@ func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 }
 
 func (s *SeriesWriter) WritePage()(){
-	s.pageWriter.WritePageHeaderAndDataIntoBuff(s.valueWriter.)
+	s.pageWriter.WritePageHeaderAndDataIntoBuff(s.valueWriter.GetByteBuffer(), s.valueCount, s.pageStatistics, s.time, s.minTimestamp)
 	// todo pageStatistics
 	s.numOfPages += 1
 
@@ -101,13 +110,12 @@ func (s *SeriesWriter) WritePage()(){
 }
 
 func (s *SeriesWriter) ResetPageStatistics()(){
-	// s.pageStatistics = statistics.Statistics.GetStatusByType()
+	s.pageStatistics = *statistics.GetStatistics(s.tsDataType)
 	return
 }
 
 
 func New(dId string, d sensorDescriptor.SensorDescriptor, pw pageWriter.PageWriter, pst int) (*SeriesWriter, error) {
-	// todo do measurement init and memory check
 
 	return &SeriesWriter{
 		deviceId:dId,
@@ -118,5 +126,7 @@ func New(dId string, d sensorDescriptor.SensorDescriptor, pw pageWriter.PageWrit
 		minimumRecordCountForCheck:1,
 		valueCountForNextSizeCheck:1,
 		numOfPages:0,
+		tsDataType:d.GetTsDataType(),
+		seriesStatistics:*statistics.GetStatistics(d.GetTsDataType()),
 	},nil
 }

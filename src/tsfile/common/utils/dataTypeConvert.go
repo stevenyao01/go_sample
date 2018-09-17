@@ -48,6 +48,16 @@ func Int32ToByte(num int32) []byte {
 	return buffer.Bytes()
 }
 
+func Int16ToByte(num int16) []byte {
+	var buffer bytes.Buffer
+	err := binary.Write(&buffer, binary.BigEndian, num)
+	if err != nil {
+		log.Error("Int16ToByte error : %s", err)
+		return nil
+	}
+	return buffer.Bytes()
+}
+
 
 // float
 func Float32ToByte(float float32) []byte {

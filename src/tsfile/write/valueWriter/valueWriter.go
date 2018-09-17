@@ -12,10 +12,8 @@ import (
 //"github.com/go_sample/src/tsfile/common/log"
 //	"encoding/gob"
 //	"github.com/elastic/beats/filebeat/harvester/reader"
-	"time"
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"github.com/go_sample/src/tsfile/write/dataPoint"
 )
 
 type ValueWriter struct {
@@ -39,9 +37,22 @@ func (s *ValueWriter) GetByteBuffer()(*bytes.Buffer){
 	timeSize := s.timeBuf.Len()
 	encodeBuffer := bytes.NewBuffer([]byte{})
 
+	// write timeBuf size
 	encodeBuffer.Write(utils.Int32ToByte(int32(timeSize)))
-	encodeBuffer.
-	return s.timeBuf.Len() + s.valueBuf.Len()
+
+	//声明一个空的slice,容量为timebuf的长度
+	timeSlice := make([]byte, timeSize)
+	//把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
+	s.timeBuf.Read(timeSlice)
+	encodeBuffer.Write(timeSlice)
+
+	//声明一个空的value slice,容量为valuebuf的长度
+	valueSlice := make([]byte, s.valueBuf.Len())
+	//把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
+	s.valueBuf.Read(valueSlice)
+	encodeBuffer.Write(valueSlice)
+
+	return encodeBuffer
 }
 
 func (s *ValueWriter) Write(t int64, tdt int, value interface{}) () {

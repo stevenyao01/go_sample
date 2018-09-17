@@ -13,6 +13,6 @@ import (
  * @Description:
  */
 
- func WriteMagic(file *os.File){
-	 file.Write([]byte(tsFileConf.MAGIC_STRING))
- }
+//func WriteMagic(file *os.File){
+//	file.Write([]byte(tsFileConf.MAGIC_STRING))
+//}

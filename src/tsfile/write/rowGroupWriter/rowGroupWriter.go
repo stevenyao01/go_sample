@@ -16,6 +16,7 @@ import (
 	"github.com/go_sample/src/tsfile/common/utils"
 	"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/pageWriter"
+	"github.com/go_sample/src/tsfile/write/tsFileWriter"
 )
 
 type RowGroupWriter struct {
@@ -47,6 +48,29 @@ func (r *RowGroupWriter) Write(t int64, data map[string]dataPoint.DataPoint) () 
 		}
 	}
 	return
+}
+
+func (r *RowGroupWriter) FlushToFileWriter (tsFileIoWriter *tsFileWriter.TsFileIoWriter) () {
+	for _, v := range r.dataSeriesWriters {
+		v.WriteToFileWriter(tsFileIoWriter)
+	}
+	return
+}
+
+func (r *RowGroupWriter) PreFlush()(){
+	// todo should flush current pages to mem.
+
+	return
+}
+
+func (r *RowGroupWriter) GetCurrentRowGroupSize() (int64) {
+	// todo get current size
+
+	return 128
+}
+
+func (r *RowGroupWriter) GetSeriesNumber() (int) {
+	return len(r.dataSeriesWriters)
 }
 
 func (r *RowGroupWriter) Close() (bool) {

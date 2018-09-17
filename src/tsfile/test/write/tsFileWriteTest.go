@@ -18,7 +18,7 @@ const (
 func main(){
 
 	// init tsFileWriter
-	tfWriter, tfwErr := tsFileWriter.NewIoWriter(fileName)
+	tfWriter, tfwErr := tsFileWriter.NewTsFileWriter(fileName)
 	if tfwErr != nil {
 		log.Info("init tsFileWriter error = %s", tfwErr)
 	}

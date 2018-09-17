@@ -1,4 +1,4 @@
-package write
+package main
 
 /**
  * @Package Name: main
@@ -48,7 +48,11 @@ func benchmarkFileWrite(filename string, n int, index int) (d time.Duration) {
 		}
 		defer file.Close()
 		for i := 0; i < n; i++ {
+			cur_offset,_:=file.Seek(0,os.SEEK_CUR)
+			fmt.Printf("current offset is %d\n", cur_offset)
 			file.WriteString(v)
+			cur_offset2,_:=file.Seek(0,os.SEEK_CUR)
+			fmt.Printf("current offset is %d\n", cur_offset2)
 			file.WriteString("\n")
 		}
 	}
@@ -58,8 +62,8 @@ func benchmarkFileWrite(filename string, n int, index int) (d time.Duration) {
 	return d
 }
 
-func main1() {
-	const k, n int = 3, 5000
+func main() {
+	const k, n int = 3, 5
 	d := [k]time.Duration{}
 	for i := 0; i < k; i++ {
 		d[i] = benchmarkFileWrite("benchmarkFile.txt", n, i)

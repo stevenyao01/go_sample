@@ -1,5 +1,9 @@
 package header
 
+import (
+	"bytes"
+	"github.com/go_sample/src/tsfile/common/utils"
+)
 
 const (
 	MQTT_CONF = "mqtt.conf"
@@ -43,30 +47,36 @@ const (
 
 
 type ChunkHeader struct {
-	measurementId		string
+	sensorId			string
 	dataSize			int
-	//tsDataType			TsDataType
-	tsDataType			int
-	//compressionType		CompressionType
-	compressionType		int
-	//encodingType		TsEncoding
-	encodingType		int
+	tsDataType			int16
+	compressionType		int16
+	encodingType		int16
 	numOfPages			int
 	serializedSize		int
 }
 
-//func deserialize() {
-//
-//}
-//
-//
-//func serialize() {
-//
-//}
+func (c *ChunkHeader)ChunkHeaderToMemory(buffer bytes.Buffer)(int32){
+	// todo write chunk header to buffer
+	buffer.Write([]byte(c.sensorId))
+	buffer.Write(utils.Int32ToByte(int32(c.dataSize)))
+	buffer.Write(utils.Int16ToByte(c.tsDataType))
+	buffer.Write(utils.Int32ToByte(int32(c.numOfPages)))
+	buffer.Write(utils.Int16ToByte(c.compressionType))
+	buffer.Write(utils.Int16ToByte(c.encodingType))
+	return int32(c.serializedSize)
+}
 
-//func main() {
-//	fmt.Println("test!!!")
-//	fmt.Println("float=", FLOAT)
-//	fmt.Println("SNAPPY=", SNAPPY)
-//	fmt.Println("BITMAP=", BITMAP)
-//}
+func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int) (*ChunkHeader, error) {
+	// todo
+	ss := 2 * 4 + 3 * 2 + len(sId)
+	return &ChunkHeader{
+		sensorId:sId,
+		dataSize:pbs,
+		tsDataType:tdt,
+		compressionType:ct,
+		encodingType:et,
+		numOfPages:nop,
+		serializedSize:ss,
+	},nil
+}
