@@ -1,37 +1,37 @@
 package header
 
 import (
-	"github.com/go_sample/src/tsfile/common/log"
 	"bytes"
-	"github.com/go_sample/src/tsfile/write/statistics"
+	"github.com/go_sample/src/tsfile/common/utils"
 )
 
 type RowGroupHeader struct {
-	deltaObjectId		string
-	dataSize			uint64
-	numOfChunks			int
-	serializedSize		int
+	deviceId			string
+	dataSize			int64
+	numOfChunks			int32
+	serializedSize		int32
 }
 
-//func (p *PageHeader)HeadToMemory(buffer bytes.Buffer)(int32){
-//	// todo write header to buffer
-//	buffer.Write(utils.Int32ToByte(p.uncompressedSize))
-//	buffer.Write(utils.Int32ToByte(p.compressedSize))
-//	buffer.Write(utils.Int32ToByte(p.numOfValues))
-//	buffer.Write(utils.Int64ToByte(p.max_timestamp))
-//	buffer.Write(utils.Int64ToByte(p.min_timestamp))
-//	p.statistics.Serialize(buffer)
-//	return p.serializedSize
-//}
+func (r *RowGroupHeader) RowGroupHeaderToMemory (buffer bytes.Buffer) (int32) {
+	// todo write header to buffer
+	buffer.Write([]byte(r.deviceId))
+	buffer.Write(utils.Int64ToByte(r.dataSize))
+	buffer.Write(utils.Int32ToByte(r.numOfChunks))
 
-func NewRowGroupHeader(ucs int32, cs int32, nov int32, sts statistics.Statistics, max_t int64, min_t int64, tsDataType int) (*RowGroupHeader, error) {
+	return r.serializedSize
+}
+
+func (r *RowGroupHeader) GetSerializedSize () (int32) {
+	return r.serializedSize
+}
+
+func NewRowGroupHeader(dId string, rgs int64, sn int32) (*RowGroupHeader, error) {
 	// todo
-	//ss := 3 * 4 + 2 * 8 + sts.GetHeaderSize(tsDataType)
+	ss := 1 * 4 + 1 * 8 + len(dId)
 	return &RowGroupHeader{
+		deviceId:dId,
+		dataSize:rgs,
+		numOfChunks:sn,
+		serializedSize:int32(ss),
 	},nil
 }
-
-
-//func NewRowGroupHeader() (*RowGroupHeader, error) {
-// return &RowGroupHeader{},nil
-//}

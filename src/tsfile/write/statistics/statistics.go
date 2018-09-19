@@ -105,7 +105,7 @@ func (s *Statistics)GetHeaderSize(tdt int16)(int){
 	return 0
 }
 
-func (s *Statistics)GetMaxByte(tdt int)([]byte){
+func (s *Statistics)GetMaxByte(tdt int16)([]byte){
 	switch tdt {
 	case 0:
 		// bool
@@ -136,7 +136,7 @@ func (s *Statistics)GetMaxByte(tdt int)([]byte){
 	return nil
 }
 
-func (s *Statistics)GetMinByte(tdt int)([]byte){
+func (s *Statistics)GetMinByte(tdt int16)([]byte){
 	switch tdt {
 	case 0:
 		// bool
@@ -167,7 +167,7 @@ func (s *Statistics)GetMinByte(tdt int)([]byte){
 	return nil
 }
 
-func (s *Statistics)GetFirstByte(tdt int)([]byte){
+func (s *Statistics)GetFirstByte(tdt int16)([]byte){
 	switch tdt {
 	case 0:
 		// bool
@@ -198,7 +198,7 @@ func (s *Statistics)GetFirstByte(tdt int)([]byte){
 	return nil
 }
 
-func (s *Statistics)GetLastByte(tdt int)([]byte){
+func (s *Statistics)GetLastByte(tdt int16)([]byte){
 	switch tdt {
 	case 0:
 		// bool
@@ -229,7 +229,7 @@ func (s *Statistics)GetLastByte(tdt int)([]byte){
 	return nil
 }
 
-func (s *Statistics)GetSumByte(tdt int)([]byte){
+func (s *Statistics)GetSumByte(tdt int16)([]byte){
 	return utils.Int64ToByte(s.sum)
 }
 

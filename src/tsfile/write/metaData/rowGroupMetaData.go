@@ -12,10 +12,15 @@ import (
 	"github.com/go_sample/src/tsfile/common/log"
 	"os"
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
+	"github.com/go_sample/src/tsfile/write/dataPoint"
 )
 
 type RowGroupMetaData struct {
 	tsIoFile 						*os.File
+	deviceId						string
+	totalByteSize					int64
+	fileOffsetOfCorrespondingData	int64
+	TimeSeriesChunkMetaDataMap		map[string]TimeSeriesChunkMetaData
 }
 
 func (t *RowGroupMetaData) WriteMagic()(int){
@@ -26,13 +31,13 @@ func (t *RowGroupMetaData) WriteMagic()(int){
 	return n
 }
 
-func StartFlushRowgroup()(){
-
-}
-
-func NewRowGroupMetaData(file string) (*RowGroupMetaData, error) {
+func NewRowGroupMetaData(dId string, tbs int64, foocd int64, tscmdm map[string]TimeSeriesChunkMetaData) (*RowGroupMetaData, error) {
 	// todo
 
 	return &RowGroupMetaData{
+		deviceId:dId,
+		totalByteSize:tbs,
+		fileOffsetOfCorrespondingData:foocd,
+		TimeSeriesChunkMetaDataMap:tscmdm,
 	},nil
 }

@@ -69,8 +69,8 @@ func (r *RowGroupWriter) GetCurrentRowGroupSize() (int64) {
 	return 128
 }
 
-func (r *RowGroupWriter) GetSeriesNumber() (int) {
-	return len(r.dataSeriesWriters)
+func (r *RowGroupWriter) GetSeriesNumber() (int32) {
+	return int32(len(r.dataSeriesWriters))
 }
 
 func (r *RowGroupWriter) Close() (bool) {

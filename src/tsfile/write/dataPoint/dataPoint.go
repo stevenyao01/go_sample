@@ -9,8 +9,6 @@ package dataPoint
  */
 
 import (
-//"github.com/go_sample/src/tsfile/common/log"
-	"time"
 	"github.com/go_sample/src/tsfile/write/seriesWriter"
 	"github.com/go_sample/src/tsfile/common/log"
 )

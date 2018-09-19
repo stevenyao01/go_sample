@@ -17,6 +17,7 @@ import (
 	"github.com/go_sample/src/tsfile/write/statistics"
 	"github.com/go_sample/src/tsfile/write/metaData"
 	"github.com/go_sample/src/tsfile/common/header"
+	"github.com/go_sample/src/tsfile/write/fileSchema"
 )
 
 type TsFileIoWriter struct {
@@ -25,6 +26,14 @@ type TsFileIoWriter struct {
 	currentRowGroupMetaData			*metaData.RowGroupMetaData
 	currentChunkMetaData			*metaData.TimeSeriesChunkMetaData
 }
+
+const(
+	MAXVALUE="max_value"
+	MINVALUE="min_value"
+	FIRST="first"
+	SUM="sum"
+	LAST="last"
+)
 
 func (t *TsFileIoWriter) GetTsIoFile () (*os.File) {
 	return t.tsIoFile
@@ -49,9 +58,14 @@ func (t *TsFileIoWriter) WriteMagic()(int){
 	return n
 }
 
-func (t *TsFileIoWriter) StartFlushRowGroup(deviceId string, rowGroupSize int64, seriesNumber int)(int){
+func (t *TsFileIoWriter) StartFlushRowGroup(deviceId string, rowGroupSize int64, seriesNumber int32)(int32){
+	log.Info("start flush rowgroup.")
+	timeSeriesChunkMetaDataMap := make(map[string]metaData.TimeSeriesChunkMetaData)
+	t.currentRowGroupMetaData, _ = metaData.NewRowGroupMetaData(deviceId, 0, t.GetPos(), timeSeriesChunkMetaDataMap)
+	rowGroupHeader, _ := header.NewRowGroupHeader(deviceId, rowGroupSize, seriesNumber)
+	rowGroupHeader.RowGroupHeaderToMemory(*t.memBuf)
 
-	return 0
+	return rowGroupHeader.GetSerializedSize()
 }
 
 func (t *TsFileIoWriter) StartFlushChunk(sd sensorDescriptor.SensorDescriptor, compressionType int16,
@@ -61,9 +75,26 @@ func (t *TsFileIoWriter) StartFlushChunk(sd sensorDescriptor.SensorDescriptor, c
 	chunkHeader, _ := header.NewChunkHeader(sd.GetSensorId(), pageBufSize, tsDataType, compressionType, encodingType, numOfPages)
 	chunkHeader.ChunkHeaderToMemory(*t.memBuf)
 	// todo set tsdigest
-
-
-	return 0
+	tsDigest, _ := metaData.NewTsDigest()
+	statisticsMap := make(map[string]bytes.Buffer)
+	var max bytes.Buffer
+	max.Write(statistics.GetMaxByte(tsDataType))
+	statisticsMap[MAXVALUE] = max
+	var min bytes.Buffer
+	min.Write(statistics.GetMinByte(tsDataType))
+	statisticsMap[MINVALUE] = min
+	var first bytes.Buffer
+	first.Write(statistics.GetMinByte(tsDataType))
+	statisticsMap[FIRST] = first
+	var sum bytes.Buffer
+	sum.Write(statistics.GetMinByte(tsDataType))
+	statisticsMap[SUM] = sum
+	var last bytes.Buffer
+	last.Write(statistics.GetMinByte(tsDataType))
+	statisticsMap[LAST] = last
+	tsDigest.SetStatistics(statisticsMap)
+	t.currentChunkMetaData.SetDigest(*tsDigest)
+	return chunkHeader.GetSerializedSize()
 }
 
 func (t *TsFileIoWriter) WriteBytesToFile (buf *bytes.Buffer) () {
@@ -73,6 +104,10 @@ func (t *TsFileIoWriter) WriteBytesToFile (buf *bytes.Buffer) () {
 	buf.Read(timeSlice)
 	t.tsIoFile.Write(timeSlice)
 	return
+}
+
+func (t *TsFileIoWriter) EndFile (schema fileSchema.FileSchema) () {
+	//timeSeriesMap map[]Timeseriesm
 }
 
 func NewTsFileIoWriter(file string) (*TsFileIoWriter, error) {

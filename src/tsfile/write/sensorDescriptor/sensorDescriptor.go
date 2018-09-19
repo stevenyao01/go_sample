@@ -46,7 +46,7 @@ func (s *SensorDescriptor) Close() (bool) {
 }
 
 
-func New(sId string, tdt int, te int) (*SensorDescriptor, error) {
+func New(sId string, tdt int16, te int16) (*SensorDescriptor, error) {
 	// todo do measurement init and memory check
 
 	return &SensorDescriptor{

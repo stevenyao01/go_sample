@@ -19,11 +19,16 @@ type TimeSeriesChunkMetaData struct {
 	fileOffsetOfCorrespondingData		int64
 	startTime							int64
 	endTime								int64
+	valueStatistics						TsDigest
 }
 
 func (t *TimeSeriesChunkMetaData) WriteMagic()(int){
 
 	return 0
+}
+
+func (t *TimeSeriesChunkMetaData) SetDigest (tsDigest TsDigest) () {
+	t.valueStatistics = tsDigest
 }
 
 func NewTimeSeriesChunkMetaData(sid string, fOffset int64, sTime int64, eTime int64) (*TimeSeriesChunkMetaData, error) {

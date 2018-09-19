@@ -15,8 +15,6 @@ import (
 	"github.com/go_sample/src/tsfile/common/header"
 	"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/tsFileWriter"
-	"os"
-	"github.com/golang/net/html/atom"
 )
 
 type PageWriter struct {
