@@ -1,4 +1,4 @@
-package pageWriter
+package tsFileWriter
 
 /**
  * @Package Name: pageWriter
@@ -14,7 +14,6 @@ import (
 	"github.com/go_sample/src/tsfile/write/statistics"
 	"github.com/go_sample/src/tsfile/common/header"
 	"github.com/go_sample/src/tsfile/common/log"
-	"github.com/go_sample/src/tsfile/write/tsFileWriter"
 )
 
 type PageWriter struct {
@@ -48,16 +47,20 @@ func (p *PageWriter) WritePageHeaderAndDataIntoBuff(dataBuffer *bytes.Buffer, va
 	return 0
 }
 
-func (p *PageWriter) WriteAllPagesOfSeriesToTsFile (tsFileIoWriter *tsFileWriter.TsFileIoWriter, seriesStatistics statistics.Statistics, numOfPage int) (int64) {
+func (p *PageWriter) WriteAllPagesOfSeriesToTsFile (tsFileIoWriter *TsFileIoWriter, seriesStatistics statistics.Statistics, numOfPage int) (int64) {
 	if p.minTimestamp == -1 {
 		log.Error("Write page error, minTime: %s, maxTime: %s")
 	}
+	// write trunk header to file
 	chunkHeaderSize :=  tsFileIoWriter.StartFlushChunk(p.desc, header.UNCOMPRESSED, p.desc.GetTsDataType(), p.desc.GetTsEncoding(), seriesStatistics, p.maxTimestamp, p.minTimestamp, p.pageBuf.Len(), numOfPage)
 	preSize := tsFileIoWriter.GetPos()
+	// write all pages to file
 	tsFileIoWriter.WriteBytesToFile(p.pageBuf)
+	// after write page, reset pageBuf
+	p.pageBuf.Reset()
 	dataSize := tsFileIoWriter.GetPos() - preSize
 	chunkSize := int64(chunkHeaderSize) + dataSize
-	tsFileIoWriter.EndTrunk(chunkSize, p.totalValueCount)
+	tsFileIoWriter.EndChunk(chunkSize, p.totalValueCount)
 	return chunkSize
 }
 
@@ -69,7 +72,7 @@ func (p *PageWriter) Reset () () {
 }
 
 
-func New(sd sensorDescriptor.SensorDescriptor) (*PageWriter, error) {
+func NewPageWriter(sd sensorDescriptor.SensorDescriptor) (*PageWriter, error) {
 	// todo do measurement init and memory check
 
 	return &PageWriter{

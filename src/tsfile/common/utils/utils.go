@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"errors"
 	"time"
-	"bytes"
-	"encoding/binary"
 )
 
 /**

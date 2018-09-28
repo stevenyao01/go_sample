@@ -1,4 +1,4 @@
-package seriesWriter
+package tsFileWriter
 
 /**
  * @Package Name: seriesWriter
@@ -9,16 +9,10 @@ package seriesWriter
  */
 
 import (
-//"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
-	"database/sql/driver"
-	"time"
-	"github.com/go_sample/src/tsfile/write/pageWriter"
-	"github.com/go_sample/src/tsfile/write/valueWriter"
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
 	"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/statistics"
-	"github.com/go_sample/src/tsfile/write/tsFileWriter"
 )
 
 type SeriesWriter struct {
@@ -26,13 +20,13 @@ type SeriesWriter struct {
 	dataSeriesWriters	map[string]SeriesWriter
 
 	desc				sensorDescriptor.SensorDescriptor
-	tsDataType 			int
-	pageWriter			pageWriter.PageWriter
+	tsDataType 			int16
+	pageWriter			PageWriter
 	/* page size threshold 	*/
 	psThres				int
 	pageCountUpperBound	int
 	/* value writer to encode data*/
-	valueWriter			valueWriter.ValueWriter
+	valueWriter			ValueWriter
 	/* value count on a page. It will be reset agter calling */
 	valueCount 			int
 	valueCountForNextSizeCheck	int
@@ -46,7 +40,7 @@ type SeriesWriter struct {
 	numOfPages			int
 }
 
-func (s *SeriesWriter) GetTsDataType() (int) {
+func (s *SeriesWriter) GetTsDataType() (int16) {
 	return s.tsDataType
 }
 
@@ -63,6 +57,7 @@ func (s *SeriesWriter) Write(t int64, value interface{}) (bool) {
 	s.valueCount = s.valueCount + 1
 	s.valueWriter.Write(t, s.tsDataType, value)
 	// todo statistics ignore here, if necessary, Statistics.java
+	s.pageStatistics.UpdateStats(s.tsDataType, value)
 	if s.minTimestamp == -1 {
 		s.minTimestamp = t
 	}
@@ -71,8 +66,10 @@ func (s *SeriesWriter) Write(t int64, value interface{}) (bool) {
 	return true
 }
 
-func (s *SeriesWriter) WriteToFileWriter (tsFileIoWriter *tsFileWriter.TsFileIoWriter) () {
+func (s *SeriesWriter) WriteToFileWriter (tsFileIoWriter *TsFileIoWriter) () {
+	// write all pages in the same chunk to file
 	s.pageWriter.WriteAllPagesOfSeriesToTsFile(tsFileIoWriter, s.seriesStatistics, s.numOfPages)
+	// reset pageWriter
 	s.pageWriter.Reset()
 	// reset series_statistics
 	s.seriesStatistics = *statistics.GetStatistics(s.tsDataType)
@@ -89,7 +86,9 @@ func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 			// todo write data to buffer
 			s.WritePage()
 		} else {
-			log.Info("not enough size now.")
+			log.Info("not enough size to write disk now.")
+			//// todo temp write page for test write file.
+			//s.WritePage()
 		}
 		// int * 1.0 / int 为float， 再乘以valueCount，得到下次检查的count
 		s.valueCountForNextSizeCheck = s.psThres * 1.0 / currentColumnSize * s.valueCount
@@ -115,8 +114,8 @@ func (s *SeriesWriter) ResetPageStatistics()(){
 }
 
 
-func New(dId string, d sensorDescriptor.SensorDescriptor, pw pageWriter.PageWriter, pst int) (*SeriesWriter, error) {
-
+func NewSeriesWriter(dId string, d sensorDescriptor.SensorDescriptor, pw PageWriter, pst int) (*SeriesWriter, error) {
+	vw, _ := NewValueWriter()
 	return &SeriesWriter{
 		deviceId:dId,
 		desc:d,
@@ -128,5 +127,7 @@ func New(dId string, d sensorDescriptor.SensorDescriptor, pw pageWriter.PageWrit
 		numOfPages:0,
 		tsDataType:d.GetTsDataType(),
 		seriesStatistics:*statistics.GetStatistics(d.GetTsDataType()),
+		pageStatistics:*statistics.GetStatistics(d.GetTsDataType()),
+		valueWriter:*vw,
 	},nil
 }

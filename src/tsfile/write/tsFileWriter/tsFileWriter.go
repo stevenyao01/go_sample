@@ -11,9 +11,6 @@ package tsFileWriter
 import (
 	"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
-	"os"
-	"github.com/go_sample/src/tsfile/write/tsRecord"
-	"github.com/go_sample/src/tsfile/write/rowGroupWriter"
 	"github.com/go_sample/src/tsfile/write/fileSchema"
 	"github.com/go_sample/src/tsfile/common/utils"
 	"fmt"
@@ -29,10 +26,9 @@ type TsFileWriter struct {
 	primaryRowGroupSize			int64
 	pageSize					int64
 	oneRowMaxSize				int
-	groupDevices				map[string]rowGroupWriter.RowGroupWriter
+	groupDevices				map[string]*RowGroupWriter
 }
 
-//var groupDevices = make(map[string]rowGroupWriter.RowGroupWriter)
 
 func (t *TsFileWriter) AddSensor(sd sensorDescriptor.SensorDescriptor) ([]byte) {
  	log.Info("enter tsFileWriter->AddSensor()")
@@ -43,9 +39,9 @@ func (t *TsFileWriter) AddSensor(sd sensorDescriptor.SensorDescriptor) ([]byte) 
 	}
 	t.schema.Registermeasurement(sd)
 	t.oneRowMaxSize = t.schema.GetCurrentRowMaxSize()
-	if t.primaryRowGroupSize <= int64(t.oneRowMaxSize) {
-		log.Info("AddSensor error: the potential size of one row is too large.")
-	}
+	//if t.primaryRowGroupSize <= int64(t.oneRowMaxSize) {
+	//	log.Info("AddSensor error: the potential size of one row is too large.")
+	//}
 	t.rowGroupSizeThreshold = t.primaryRowGroupSize - int64(t.oneRowMaxSize)
 
 	// todo flush rowgroup
@@ -78,24 +74,43 @@ func (t *TsFileWriter)checkMemorySizeAndMayFlushGroup()(bool){
 func (t *TsFileWriter)flushAllRowGroups(isFillRowGroup bool)(bool){
 	// todo flush data to disk
 	if t.recordCount > 0 {
-		for _, v := range t.groupDevices {
-			v.PreFlush()
+		totalMemStart := t.tsFileIoWriter.GetPos()
+		if t.recordCount > 0 {
+			for _, v := range t.groupDevices {
+				v.PreFlush()
+			}
+			for k, _ := range t.groupDevices {
+				groupDevice := t.groupDevices[k]
+				rowGroupSize := groupDevice.GetCurrentRowGroupSize()
+				// write rowgroup header to file
+				t.tsFileIoWriter.StartFlushRowGroup(k, rowGroupSize, groupDevice.GetSeriesNumber())
+				// write chunk to file
+				groupDevice.FlushToFileWriter(t.tsFileIoWriter)
+				// finished write file(and then write filemeta to file)
+				t.tsFileIoWriter.EndRowGroup(t.tsFileIoWriter.GetPos() - totalMemStart)
+			}
 		}
-		for k, _ := range t.groupDevices {
-			groupDevice := t.groupDevices[k]
-			rowGroupSize := groupDevice.GetCurrentRowGroupSize()
-			t.tsFileIoWriter.StartFlushRowGroup(k, rowGroupSize, groupDevice.GetSeriesNumber())
-			groupDevice.FlushToFileWriter(t.tsFileIoWriter)
-		}
+		log.Info("write to rowGroup end!")
+		t.recordCount = 0
+		t.reset()
 	}
 	return true
 }
 
-func (t *TsFileWriter) Write(tr tsRecord.TsRecord) (bool) {
+func (t *TsFileWriter) reset () () {
+	for k, _ := range t.groupDevices {
+		delete(t.groupDevices, k)
+	}
+}
+
+func (t *TsFileWriter) Write(tr TsRecord) (bool) {
 	log.Info("enter tsFileWriter->Write()")
 	// todo write data here
 	if t.checkIsDeviceExist(tr, *t.schema) {
-		t.groupDevices[tr.GetDeviceId()].Write(tr.GetTime(), tr.GetDataPointMap())
+		//var r RowGroupWriter;
+		gd := t.groupDevices[tr.GetDeviceId()]
+		gd.Write(tr.GetTime(), tr.GetDataPointMap())
+		//(t.groupDevices[tr.GetDeviceId()]).Write(tr.GetTime(), tr.GetDataPointMap())
 		t.recordCount = t.recordCount + 1
 		return t.checkMemorySize()
 	}
@@ -115,7 +130,7 @@ func (t *TsFileWriter) Close() (bool) {
 
 	calculateMemSizeForAllGroup()
 	t.flushAllRowGroups(false)
-	t.tsFileIoWriter.EndFile(t.schema)
+	t.tsFileIoWriter.EndFile(*t.schema)
 	return true
 }
 
@@ -123,11 +138,18 @@ func (t *TsFileWriter)checkMemorySize() (bool) {
 	if t.recordCount >= t.recordCountForNextMemCheck {
 		memSize := calculateMemSizeForAllGroup()
 		if memSize > t.rowGroupSizeThreshold {
-			log.Info("start write rowGroup, memory space occupy:%s", memSize)
-			t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / t.oneRowMaxSize
+			log.Info("start write rowGroup, memory space occupy: %v", memSize)
+			if t.oneRowMaxSize != 0 {
+				t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
+			}else{
+				log.Info("tsFileWriter oneRowMaxSize is not correct.")
+			}
+
 			return t.flushAllRowGroups(false)
 		} else {
-			t.recordCountForNextMemCheck = t.recordCount + (t.rowGroupSizeThreshold - memSize) / t.oneRowMaxSize
+			if t.oneRowMaxSize != 0 {
+				t.recordCountForNextMemCheck = t.recordCount + (t.rowGroupSizeThreshold - memSize) / int64(t.oneRowMaxSize)
+			}
 			return false
 		}
 	}
@@ -141,19 +163,19 @@ func calculateMemSizeForAllGroup()(int64){
 	return 128 * 1024 *1024
 }
 
-func (t *TsFileWriter) checkIsDeviceExist(tr tsRecord.TsRecord, schema fileSchema.FileSchema) bool {
-	var groupDevice *rowGroupWriter.RowGroupWriter
+func (t *TsFileWriter) checkIsDeviceExist(tr TsRecord, schema fileSchema.FileSchema) bool {
+	var groupDevice *RowGroupWriter
 	var err error
 	// check device
 	if _, ok := t.groupDevices[tr.GetDeviceId()]; !ok {
 		// if not exist
-		groupDevice, err = rowGroupWriter.New(tr.GetDeviceId())
+		groupDevice, err = NewRowGroupWriter(tr.GetDeviceId())
 		if err != nil {
 			log.Info("rowGroupWriter init ok!")
 		}
-		t.groupDevices[tr.GetDeviceId()] = *groupDevice
+		t.groupDevices[tr.GetDeviceId()] = groupDevice
 	} else { // if exist
-		*groupDevice = t.groupDevices[tr.GetDeviceId()]
+		groupDevice = t.groupDevices[tr.GetDeviceId()]
 	}
 	schemaSensorDescriptorMap := schema.GetSensorDescriptiorMap()
 	for k, v := range tr.GetDataPointMap() {
@@ -197,7 +219,7 @@ func NewTsFileWriter(file string) (*TsFileWriter, error) {
 	tfiWriter.WriteMagic()
 
 	// init rowGroupSizeThreshold
-	var prgs int64 = 0
+	var prgs int64 = tsFileConf.GroupSizeInByte
 	rgst := tsFileConf.GroupSizeInByte - prgs
 
  return &TsFileWriter{
@@ -207,6 +229,6 @@ func NewTsFileWriter(file string) (*TsFileWriter, error) {
  	recordCountForNextMemCheck:1,
  	primaryRowGroupSize:prgs,
  	rowGroupSizeThreshold:rgst,
- 	groupDevices:make(map[string]rowGroupWriter.RowGroupWriter),
+ 	groupDevices:make(map[string]*RowGroupWriter),
  	},nil
 }

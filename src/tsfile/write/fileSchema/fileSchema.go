@@ -24,8 +24,12 @@ type FileSchema struct {
 
 func (f *FileSchema) AddTimeSeriesMetaData (sensorId string, tsDataType int16) () {
 	ts, _ := metaData.NewTimeSeriesMetaData(sensorId, tsDataType)
-	log.Info("add time series: %s", ts)
+	log.Info("add time series: %v", ts)
 	f.tsMetaData[sensorId] = *ts
+}
+
+func (f *FileSchema) GetTimeSeriesMetaDatas () (map[string]metaData.TimeSeriesMetaData) {
+	return f.tsMetaData
 }
 
 func (f *FileSchema) GetSensorDescriptiorMap() (map[string]sensorDescriptor.SensorDescriptor) {

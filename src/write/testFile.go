@@ -62,7 +62,7 @@ func benchmarkFileWrite(filename string, n int, index int) (d time.Duration) {
 	return d
 }
 
-func main() {
+func main1() {
 	const k, n int = 3, 5
 	d := [k]time.Duration{}
 	for i := 0; i < k; i++ {

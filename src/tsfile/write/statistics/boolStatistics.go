@@ -15,9 +15,10 @@ type BoolStatistics struct {
 	max		bool
 	min 	bool
 	first 	bool
-	double 	bool
+	double 	int64
 	sum 	int64
 	last 	bool
+	isEmpty	bool
 }
 
 //func (d *BoolStatistics) GetStatistics(t int64, tdt int, value interface{}) (string) {
@@ -37,5 +38,6 @@ type BoolStatistics struct {
 func NewBool() (*Statistics, error) {
 
 	return &Statistics{
+		isEmpty:true,
 	},nil
 }

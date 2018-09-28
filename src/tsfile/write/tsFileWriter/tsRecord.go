@@ -1,4 +1,4 @@
-package tsRecord
+package tsFileWriter
 
 /**
  * @Package Name: tsRecord
@@ -11,13 +11,12 @@ package tsRecord
 import (
 	"time"
 	"sync"
-	"github.com/go_sample/src/tsfile/write/dataPoint"
 )
 
 type TsRecord struct {
 	time				int64
 	deviceId			string
-	dataPointMap		map[string]dataPoint.DataPoint
+	dataPointMap		map[string]DataPoint
 	m 					sync.Mutex
 }
 
@@ -27,8 +26,9 @@ func (t *TsRecord) SetTime(time time.Time) () {
 	return
 }
 
-func (t *TsRecord) AddTuple(tuple dataPoint.DataPoint) () {
+func (t *TsRecord) AddTuple(tuple DataPoint) () {
 	//PushBack(t, tuple)
+	// t.dataPointMap[t.deviceId] = tuple
 	t.dataPointMap[t.deviceId] = tuple
 	return
 }
@@ -41,7 +41,7 @@ func (t *TsRecord) GetDeviceId() (string) {
 	return t.deviceId
 }
 
-func (t *TsRecord) GetDataPointMap() (map[string]dataPoint.DataPoint) {
+func (t *TsRecord) GetDataPointMap() (map[string]DataPoint) {
 	return t.dataPointMap
 }
 
@@ -102,12 +102,12 @@ func (t *TsRecord) GetDataPointMap() (map[string]dataPoint.DataPoint) {
 //}
 
 
-func New(t time.Time, dId string) (*TsRecord, error) {
+func NewTsRecord (t time.Time, dId string) (*TsRecord, error) {
 	// todo
 
 	return &TsRecord{
 		time:t.Unix(),
 		deviceId:dId,
-		dataPointMap:make(map[string]dataPoint.DataPoint),
+		dataPointMap:make(map[string]DataPoint),
 	},nil
 }

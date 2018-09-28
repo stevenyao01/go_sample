@@ -1,4 +1,4 @@
-package dataPoint
+package tsFileWriter
 
 /**
  * @Package Name: dataPoint
@@ -9,7 +9,6 @@ package dataPoint
  */
 
 import (
-	"github.com/go_sample/src/tsfile/write/seriesWriter"
 	"github.com/go_sample/src/tsfile/common/log"
 )
 
@@ -27,12 +26,12 @@ func (d *DataPoint) GetSensorId() (string) {
 	return d.sensorId
 }
 
-func (d *DataPoint) Write(t int64, sd seriesWriter.SeriesWriter) (bool) {
-	if sd.GetTsDeviceId() == "" {
+func (d *DataPoint) Write(t int64, sw SeriesWriter) (bool) {
+	if sw.GetTsDeviceId() == "" {
 		log.Info("give seriesWriter is null, do nothing and return.")
 		return false
 	}
-	sd.Write(t, d.value)
+	sw.Write(t, d.value)
 	return true
 }
 

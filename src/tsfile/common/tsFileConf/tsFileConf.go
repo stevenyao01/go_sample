@@ -76,7 +76,7 @@ const (
 	pageCheckSizeThreshold = 100
 
 	// Current version is 3
-	currentVersion = 3
+	CurrentVersion = 3
 
 	// Default endian value is LITTLE_ENDIAN
 	endian = "LITTLE_ENDIAN"

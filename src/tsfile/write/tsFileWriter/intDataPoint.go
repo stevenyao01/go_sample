@@ -1,4 +1,4 @@
-package dataPoint
+package tsFileWriter
 
 import (
 )

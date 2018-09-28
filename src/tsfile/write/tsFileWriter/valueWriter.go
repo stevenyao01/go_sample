@@ -1,4 +1,4 @@
-package valueWriter
+package tsFileWriter
 
 /**
  * @Package Name: valueWriter
@@ -9,19 +9,16 @@ package valueWriter
  */
 
 import (
-//"github.com/go_sample/src/tsfile/common/log"
-//	"encoding/gob"
-//	"github.com/elastic/beats/filebeat/harvester/reader"
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
 )
 
 type ValueWriter struct {
-	// time
-	timeEncoder		Encoder
-
-	// value
-	valueEncoder 	Encoder
+	//// time
+	//timeEncoder		Encoder
+	//
+	//// value
+	//valueEncoder 	Encoder
 
 	// todo these buffer should be encoding
 	timeBuf 			*bytes.Buffer
@@ -55,7 +52,7 @@ func (s *ValueWriter) GetByteBuffer()(*bytes.Buffer){
 	return encodeBuffer
 }
 
-func (s *ValueWriter) Write(t int64, tdt int, value interface{}) () {
+func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 	var timeByteData []byte
 	var valueByteData []byte
 	switch tdt {
@@ -77,6 +74,7 @@ func (s *ValueWriter) Write(t int64, tdt int, value interface{}) () {
 
 	case 3:
 		//float
+		//if data, ok := value.(float32); ok {
 		if data, ok := value.(float32); ok {
 			valueByteData = utils.Float32ToByte(data)
 		}
@@ -120,7 +118,7 @@ func (s *ValueWriter) Reset() () {
 //}
 
 
-func New() (*ValueWriter, error) {
+func NewValueWriter() (*ValueWriter, error) {
 
 	return &ValueWriter{
 		//sensorId:sId,

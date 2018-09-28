@@ -1,8 +1,6 @@
 package tsFileWriter
 
 import (
-	"github.com/go_sample/src/tsfile/common/tsFileConf"
-	"os"
 )
 
 /**

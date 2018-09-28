@@ -12,8 +12,9 @@ type RowGroupHeader struct {
 	serializedSize		int32
 }
 
-func (r *RowGroupHeader) RowGroupHeaderToMemory (buffer bytes.Buffer) (int32) {
+func (r *RowGroupHeader) RowGroupHeaderToMemory (buffer *bytes.Buffer) (int32) {
 	// todo write header to buffer
+	buffer.Write(utils.Int32ToByte(int32(len(r.deviceId))))
 	buffer.Write([]byte(r.deviceId))
 	buffer.Write(utils.Int64ToByte(r.dataSize))
 	buffer.Write(utils.Int32ToByte(r.numOfChunks))

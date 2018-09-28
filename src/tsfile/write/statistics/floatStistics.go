@@ -18,9 +18,10 @@ type FloatStatistics struct {
 	double 	int64
 	sum 	int64
 	last 	int64
+	isEmpty bool
 }
 
-func (i *IntStatistics)GetHeaderSize()(int){
+func (i *IntStatistics)GetFloatHeaderSize()(int){
 	return 8 * 6
 }
 
@@ -41,5 +42,12 @@ func (i *IntStatistics)GetHeaderSize()(int){
 func NewFloat() (*Statistics, error) {
 
 	return &Statistics{
+		isEmpty:true,
+		max:0,
+		min:0,
+		first:0,
+		double:0,
+		sum:0,
+		last:0,
 	},nil
 }

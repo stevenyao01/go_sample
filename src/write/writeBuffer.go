@@ -24,7 +24,7 @@ import (
 //}
 
 
-func main1() (){
+func main2() (){
 
 	fmt.Println("===========以下通过Write把swift写入Learning缓冲器尾部=========")
 	newBytes1 := []byte("Learning")

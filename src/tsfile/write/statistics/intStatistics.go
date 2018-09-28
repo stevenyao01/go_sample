@@ -18,9 +18,10 @@ type IntStatistics struct {
 	double 	int
 	sum 	int64
 	last 	int
+	isEmpty	bool
 }
 
-func (i *IntStatistics)GetHeaderSize()(int){
+func (i *IntStatistics)GetIntHeaderSize()(int){
 	return 5 * 4 + 8 *1
 }
 
@@ -41,5 +42,6 @@ func (i *IntStatistics)GetHeaderSize()(int){
 func NewInt() (*Statistics, error) {
 
 	return &Statistics{
+		isEmpty:true,
 	},nil
 }
