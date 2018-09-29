@@ -11,7 +11,6 @@ package metaData
 import (
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"github.com/go_sample/src/tsfile/common/log"
 )
 
 type TsDeviceMetaData struct {
@@ -56,10 +55,6 @@ func (t *TsDeviceMetaData) SetEndTime (time int64) () {
 func (t *TsDeviceMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 	if t.sizeOfRowGroupMetaDataSli != len(t.rowGroupmetaDataSli) {
 		t.ReCalculateSerializedSize()
-	}
-	for _, v := range t.rowGroupmetaDataSli {
-		log.Info("yaohp: %p", t.rowGroupmetaDataSli[0])
-		log.Info("yaohp1: %p", v)
 	}
 	var byteLen int
 

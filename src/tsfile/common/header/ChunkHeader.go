@@ -54,16 +54,19 @@ type ChunkHeader struct {
 	encodingType		int16
 	numOfPages			int
 	serializedSize		int
+	maxTombstoneTime 	int64
 }
 
 func (c *ChunkHeader) ChunkHeaderToMemory(buffer *bytes.Buffer)(int32){
 	// todo write chunk header to buffer
+	buffer.Write(utils.Int32ToByte(int32(len(c.sensorId))))
 	buffer.Write([]byte(c.sensorId))
 	buffer.Write(utils.Int32ToByte(int32(c.dataSize)))
 	buffer.Write(utils.Int16ToByte(c.tsDataType))
 	buffer.Write(utils.Int32ToByte(int32(c.numOfPages)))
 	buffer.Write(utils.Int16ToByte(c.compressionType))
 	buffer.Write(utils.Int16ToByte(c.encodingType))
+	buffer.Write(utils.Int64ToByte(c.maxTombstoneTime))
 	return int32(c.serializedSize)
 }
 
@@ -71,9 +74,18 @@ func (c *ChunkHeader) GetSerializedSize () (int) {
 	return c.serializedSize
 }
 
-func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int) (*ChunkHeader, error) {
+func (c *ChunkHeader) GetMaxTombstoneTime () (mtt int64) {
+	return c.maxTombstoneTime
+}
+
+func (c *ChunkHeader) SetMaxTombstoneTime (mtt int64) () {
+	c.maxTombstoneTime = mtt
+}
+
+
+func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int, mtt int64) (*ChunkHeader, error) {
 	// todo
-	ss := 2 * 4 + 3 * 2 + len(sId)
+	ss := 3 * 4 + 3 * 2 + len(sId) + 8
 	return &ChunkHeader{
 		sensorId:sId,
 		dataSize:pbs,
@@ -82,5 +94,6 @@ func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int)
 		encodingType:et,
 		numOfPages:nop,
 		serializedSize:ss,
+		maxTombstoneTime:mtt,
 	},nil
 }

@@ -28,7 +28,7 @@ func (r *RowGroupHeader) GetSerializedSize () (int32) {
 
 func NewRowGroupHeader(dId string, rgs int64, sn int32) (*RowGroupHeader, error) {
 	// todo
-	ss := 1 * 4 + 1 * 8 + len(dId)
+	ss := 1 * 4 + 1 * 8 + len(dId) + 1 * 4
 	return &RowGroupHeader{
 		deviceId:dId,
 		dataSize:rgs,

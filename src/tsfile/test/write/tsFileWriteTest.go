@@ -24,7 +24,7 @@ func main(){
 
 	enCompress := new(compress.Encompress)
 	aSlice := make([]byte, 0)
-	enc := enCompress.GetEncompressor(header.SNAPPY).Encompress(aSlice, []byte("hello moto"))
+	enc := enCompress.GetEncompressor(header.SNAPPY).Encompress(aSlice, []byte("hello motoa"))
 	dec, _ := enCompress.DeCompress(enc)
 	log.Info("dec: %s", dec)
 
@@ -36,11 +36,11 @@ func main(){
 	}
 
 	// init sensorDescriptor
-	sd, sdErr := sensorDescriptor.New("sensor_1", header.FLOAT, header.TS_2DIFF)
+	sd, sdErr := sensorDescriptor.New("sensor_1", header.FLOAT, header.PLAIN)
 	if sdErr != nil {
 		log.Info("init sensorDescriptor error = %s", sdErr)
 	}
-	sd2, sdErr2 := sensorDescriptor.New("sensor_2", header.FLOAT, header.TS_2DIFF)
+	sd2, sdErr2 := sensorDescriptor.New("sensor_2", header.FLOAT, header.PLAIN)
 	if sdErr2 != nil {
 		log.Info("init sensorDescriptor error = %s", sdErr2)
 	}

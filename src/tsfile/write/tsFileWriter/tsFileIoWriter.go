@@ -19,7 +19,6 @@ import (
 	"github.com/go_sample/src/tsfile/common/header"
 	"github.com/go_sample/src/tsfile/write/fileSchema"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"fmt"
 )
 
 type TsFileIoWriter struct {
@@ -52,14 +51,14 @@ func (t *TsFileIoWriter) EndChunk (size int64, totalValueCount int64) () {
 	t.currentChunkMetaData.SetTotalByteSizeOfPagesOnDisk(size)
 	t.currentChunkMetaData.SetNumOfPoints(totalValueCount)
 	t.currentRowGroupMetaData.AddTimeSeriesChunkMetaData(t.currentChunkMetaData)
-	//////////////////
-	p := t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli[0]
-	fmt.Printf("%p\n", t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli)
-	fmt.Printf("%p\n", p)
-	fmt.Printf("md:%p", t.currentChunkMetaData)
-	/////////////////////////
+	////////////////////
+	//p := t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli[0]
+	//fmt.Printf("%p\n", t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli)
+	//fmt.Printf("%p\n", p)
+	//fmt.Printf("md:%p", t.currentChunkMetaData)
+	///////////////////////////
 	log.Info("end Chunk: %s, totalvalue: %s", t.currentChunkMetaData, totalValueCount)
-	//t.currentChunkMetaData = nil
+	t.currentChunkMetaData = nil
 
 	return
 }
@@ -158,7 +157,7 @@ func (t *TsFileIoWriter) StartFlushChunk(sd sensorDescriptor.SensorDescriptor, c
 								tsDataType int16, encodingType int16, statistics statistics.Statistics,
 								maxTimestamp int64, minTimestamp int64, pageBufSize int, numOfPages int)(int){
 	t.currentChunkMetaData, _ = metaData.NewTimeSeriesChunkMetaData(sd.GetSensorId(), t.GetPos(), minTimestamp, maxTimestamp)
-	chunkHeader, _ := header.NewChunkHeader(sd.GetSensorId(), pageBufSize, tsDataType, compressionType, encodingType, numOfPages)
+	chunkHeader, _ := header.NewChunkHeader(sd.GetSensorId(), pageBufSize, tsDataType, compressionType, encodingType, numOfPages, 0)
 	chunkHeader.ChunkHeaderToMemory(t.memBuf)
 	// chunk header bytebuffer write to file
 	t.WriteBytesToFile(t.memBuf)

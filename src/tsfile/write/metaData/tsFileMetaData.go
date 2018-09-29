@@ -35,8 +35,16 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 		n, _ := buf.Write(utils.Int32ToByte(0))
 		byteLen += n
 	} else {
+		n := len(t.deviceMap)
+		log.Info("nnnn: %d", n)
+		log.Info("mmmm:%d", int32(n))
 		d1, _ := buf.Write(utils.Int32ToByte(int32(len(t.deviceMap))))
 		byteLen += d1
+		for i := 0;i < 100 ;i++ {
+			d11, _ := buf.Write(utils.Int32ToByte(int32(3)))
+			byteLen += d11
+		}
+
 		for k, v := range t.deviceMap {
 			// write string tsDeviceMetaData key
 			d2, _ := buf.Write(utils.Int32ToByte(int32(len(k))))

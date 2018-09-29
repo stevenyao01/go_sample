@@ -137,7 +137,7 @@ func (t *TsFileWriter) Close() (bool) {
 func (t *TsFileWriter)checkMemorySize() (bool) {
 	if t.recordCount >= t.recordCountForNextMemCheck {
 		memSize := calculateMemSizeForAllGroup()
-		if memSize > t.rowGroupSizeThreshold {
+		if memSize >= t.rowGroupSizeThreshold {
 			log.Info("start write rowGroup, memory space occupy: %v", memSize)
 			if t.oneRowMaxSize != 0 {
 				t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
@@ -180,7 +180,8 @@ func (t *TsFileWriter) checkIsDeviceExist(tr TsRecord, schema fileSchema.FileSch
 	schemaSensorDescriptorMap := schema.GetSensorDescriptiorMap()
 	for k, v := range tr.GetDataPointMap() {
 		if contain, _ := utils.MapContains(schemaSensorDescriptorMap, v.GetSensorId()); contain {
-			groupDevice.AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
+			//groupDevice.AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
+			t.groupDevices[tr.GetDeviceId()].AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
 		} else {
 			log.Error("input sensor is invalid: ", v.GetSensorId())
 		}
