@@ -22,7 +22,7 @@ type SeriesWriter struct {
 
 	desc				*sensorDescriptor.SensorDescriptor
 	tsDataType 			int16
-	pageWriter			PageWriter
+	pageWriter			*PageWriter
 	/* page size threshold 	*/
 	psThres				int
 	pageCountUpperBound	int
@@ -95,8 +95,6 @@ func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 			s.WritePage()
 		} else {
 			log.Info("not enough size to write disk now.")
-			//// todo temp write page for test write file.
-			//s.WritePage()
 		}
 		// int * 1.0 / int 为float， 再乘以valueCount，得到下次检查的count
 		s.valueCountForNextSizeCheck = s.psThres * 1.0 / currentColumnSize * s.valueCount
@@ -134,7 +132,7 @@ func (s *SeriesWriter) ResetPageStatistics()(){
 }
 
 
-func NewSeriesWriter(dId string, d *sensorDescriptor.SensorDescriptor, pw PageWriter, pst int) (*SeriesWriter, error) {
+func NewSeriesWriter(dId string, d *sensorDescriptor.SensorDescriptor, pw *PageWriter, pst int) (*SeriesWriter, error) {
 	vw, _ := NewValueWriter(d)
 	return &SeriesWriter{
 		deviceId:dId,

@@ -11,7 +11,6 @@ package metaData
 import (
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"github.com/go_sample/src/tsfile/common/log"
 )
 
 type TsFileMetaData struct {
@@ -38,10 +37,6 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 		n := len(t.deviceMap)
 		d1, _ := buf.Write(utils.Int32ToByte(int32(n)))
 		byteLen += d1
-		//for i := 0;i < 100 ;i++ {
-		//	d11, _ := buf.Write(utils.Int32ToByte(int32(3)))
-		//	byteLen += d11
-		//}
 
 		for k, v := range t.deviceMap {
 			// write string tsDeviceMetaData key
@@ -51,7 +46,7 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 			byteLen += d3
 			// tsDeviceMetaData SerializeTo
 			byteLen += v.SerializeTo(buf)
-			log.Info("v: %s", v)
+			// log.Info("v: %s", v)
 		}
 	}
 	if t.timeSeriesMetaDataMap == nil {
@@ -63,7 +58,7 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 		for _, vv := range t.timeSeriesMetaDataMap {
 			// timeSeriesMetaData SerializeTo
 			byteLen += vv.Serialize(buf)
-			log.Info("vv: %s", vv)
+			// log.Info("vv: %s", vv)
 		}
 	}
 	f1, _ := buf.Write(utils.Int32ToByte(int32(t.currentVersion)))

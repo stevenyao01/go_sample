@@ -46,7 +46,7 @@ func NewFloat() (*Statistics, error) {
 		max:0,
 		min:0,
 		first:0,
-		double:0,
+		//double:0,
 		sum:0,
 		last:0,
 	},nil

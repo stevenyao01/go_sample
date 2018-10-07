@@ -13,7 +13,6 @@ import (
 	"github.com/go_sample/src/tsfile/common/log"
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"fmt"
 )
 
 type RowGroupMetaData struct {
@@ -27,10 +26,7 @@ type RowGroupMetaData struct {
 }
 
 func (r *RowGroupMetaData) AddTimeSeriesChunkMetaData (md *TimeSeriesChunkMetaData) () {
-	fmt.Printf("md:%p\n", r.TimeSeriesChunkMetaDataSli)
 	r.TimeSeriesChunkMetaDataSli = append(r.TimeSeriesChunkMetaDataSli, md)
-	//r.TimeSeriesChunkMetaDataSli[0]=md
-	fmt.Printf("md:%p\n", r.TimeSeriesChunkMetaDataSli)
 	r.serializedSize += md.GetSerializedSize()
 	r.sizeOfChunkSli += 1
 }

@@ -26,11 +26,8 @@ func (r *RowGroupWriter) AddSeriesWriter(sd *sensorDescriptor.SensorDescriptor, 
 		pw, _ := NewPageWriter(sd)
 
 		// new serieswrite
-		sw, _ := NewSeriesWriter(r.deviceId, sd, *pw, pageSize)
-
-		log.Info("lllllll: %d", len(r.dataSeriesWriters))
+		sw, _ := NewSeriesWriter(r.deviceId, sd, pw, pageSize)
 		r.dataSeriesWriters[sd.GetSensorId()] = sw
-		log.Info("lllllllssss: %d", len(r.dataSeriesWriters))
 	} else {
 		log.Error("given sensor has exist, need not add to series writer again.")
 	}

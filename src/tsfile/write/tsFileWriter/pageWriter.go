@@ -37,6 +37,7 @@ func (p *PageWriter) WritePageHeaderAndDataIntoBuff(dataBuffer *bytes.Buffer, va
 	// write pageheader to pageBuf
 	log.Info("start to flush a page header into buffer, buf pos: %d", p.pageBuf.Len())
 	pageHeader.PageHeaderToMemory(p.pageBuf)
+	log.Info("pageHeader: %v", pageHeader)
 	log.Info("finished to flush a page header into buffer, buf pos: %d", p.pageBuf.Len())
 
 	// write pageData to pageBuf

@@ -1,4 +1,4 @@
-package main
+package main1
 
 import (
 	"bytes"
@@ -15,10 +15,10 @@ import (
  */
 
  func main () () {
-	buf := bytes.NewBuffer([]byte{})
+	//buf := bytes.NewBuffer([]byte{})
  	//enc := Encoder().Encode(1, buf)
- 	enc, _ := enc.
- 	tt := enc.
- 	tt := enc.eo.Encode(1, buf)
- 	fmt.Println("tt: %s", tt)
+ 	//enc, _ := enc.
+ 	//tt := enc.
+ 	//tt := enc.eo.Encode(1, buf)
+ 	//fmt.Println("tt: %s", tt)
  }

@@ -13,7 +13,6 @@ import (
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
 	"github.com/go_sample/src/tsfile/write/fileSchema"
 	"github.com/go_sample/src/tsfile/common/utils"
-	"fmt"
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
 )
 
@@ -31,7 +30,7 @@ type TsFileWriter struct {
 
 
 func (t *TsFileWriter) AddSensor(sd *sensorDescriptor.SensorDescriptor) ([]byte) {
- 	log.Info("enter tsFileWriter->AddSensor()")
+ 	log.Info("tsFileWriter->AddSensor()")
  	if _, ok := t.schema.GetSensorDescriptiorMap()[sd.GetSensorId()]; !ok {
 		t.schema.GetSensorDescriptiorMap()[sd.GetSensorId()] = sd
 	}else{
@@ -49,21 +48,21 @@ func (t *TsFileWriter) AddSensor(sd *sensorDescriptor.SensorDescriptor) ([]byte)
  	return nil
 }
 
-func (t *TsFileWriter)checkMemorySizeAndMayFlushGroup()(bool){
-	if t.recordCount >= t.recordCountForNextMemCheck {
-		// calculate all group size
-		memSize := t.CalculateMemSizeForAllGroup()
-		if memSize > t.rowGroupSizeThreshold {
-			log.Info("start_write_row_group, memory space occupy: %s", memSize)
-			t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
-			return t.flushAllRowGroups(false)
-		} else {
-			t.recordCountForNextMemCheck = t.recordCount + (t.rowGroupSizeThreshold - memSize) / int64(t.oneRowMaxSize)
-			return false
-		}
-	}
-	return false
-}
+//func (t *TsFileWriter)checkMemorySize()(bool){
+//	if t.recordCount >= t.recordCountForNextMemCheck {
+//		// calculate all group size
+//		memSize := t.CalculateMemSizeForAllGroup()
+//		if memSize > t.rowGroupSizeThreshold {
+//			log.Info("start_write_row_group, memory space occupy: %s", memSize)
+//			t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
+//			return t.flushAllRowGroups(false)
+//		} else {
+//			t.recordCountForNextMemCheck = t.recordCount + (t.rowGroupSizeThreshold - memSize) / int64(t.oneRowMaxSize)
+//			return false
+//		}
+//	}
+//	return false
+//}
 
 /**
    * flush the data in all series writers and their page writers to outputStream.
@@ -105,7 +104,7 @@ func (t *TsFileWriter) reset () () {
 }
 
 func (t *TsFileWriter) Write(tr TsRecord) (bool) {
-	log.Info("enter tsFileWriter->Write()")
+	log.Info("tsFileWriter->Write()")
 	// todo write data here
 	if t.checkIsDeviceExist(tr, *t.schema) {
 		//var r RowGroupWriter;
@@ -113,11 +112,8 @@ func (t *TsFileWriter) Write(tr TsRecord) (bool) {
 		gd.Write(tr.GetTime(), tr.GetDataPointSli())
 		//(t.groupDevices[tr.GetDeviceId()]).Write(tr.GetTime(), tr.GetDataPointMap())
 		t.recordCount = t.recordCount + 1
-		return t.checkMemorySize()
+		return t.checkMemorySizeAndMayFlushGroup() //t.checkMemorySize()
 	}
-
-	///////////////////////////////////////////////
-	//t.tsFile.Write(v)
 	return false
 }
 
@@ -135,16 +131,16 @@ func (t *TsFileWriter) Close() (bool) {
 	return true
 }
 
-func (t *TsFileWriter)checkMemorySize() (bool) {
+func (t *TsFileWriter)checkMemorySizeAndMayFlushGroup() (bool) {
 	if t.recordCount >= t.recordCountForNextMemCheck {
 		memSize := t.CalculateMemSizeForAllGroup()
 		if memSize >= t.rowGroupSizeThreshold {
 			log.Info("start write rowGroup, memory space occupy: %v", memSize)
 			if t.oneRowMaxSize != 0 {
 				t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
-			}else{
-				log.Info("tsFileWriter oneRowMaxSize is not correct.")
-			}
+			}//else{
+			//	log.Info("tsFileWriter oneRowMaxSize is not correct.")
+			//}
 
 			return t.flushAllRowGroups(false)
 		} else {
@@ -165,7 +161,7 @@ func (t *TsFileWriter) CalculateMemSizeForAllGroup()(int64){
 	}
 
 	// return max size for write rowGroupHeader
-	return 128 * 1024 *1024
+	return memTotalSize //128 * 1024 *1024
 }
 
 func (t *TsFileWriter) checkIsDeviceExist(tr TsRecord, schema fileSchema.FileSchema) bool {
@@ -186,25 +182,12 @@ func (t *TsFileWriter) checkIsDeviceExist(tr TsRecord, schema fileSchema.FileSch
 	for k, v := range tr.GetDataPointSli() {
 		if contain, _ := utils.MapContains(schemaSensorDescriptorMap, v.GetSensorId()); contain {
 			//groupDevice.AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
-			log.Info("gggggg:%p", t.groupDevices[tr.GetDeviceId()])
 			t.groupDevices[tr.GetDeviceId()].AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
 		} else {
 			log.Error("input sensor is invalid: ", v.GetSensorId())
 		}
-		fmt.Printf("k=%v, v=%v\n", k, v)
+		log.Info("k=%v, v=%v\n", k, v)
 	}
-
-	//var next *list.Element
-	//for e := tr.DataPointList.Front(); e != nil; e = next {
-	//	//next = e.Next()
-	//	//l.Remove(e)
-	//	var x dataPoint.DataPoint //x;// = e.Value
-	//	x = e.Value;
-	//	if utils.MapContains(shemaSensorDescriptorMap, e.Value.) {
-	//
-	//	}
-	//
-	//}
 	return true
 }
 

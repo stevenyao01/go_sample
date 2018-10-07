@@ -13,7 +13,6 @@ import (
 	"github.com/go_sample/src/tsfile/common/utils"
 	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
-	"github.com/go_sample/src/tsfile/common/log"
 )
 
 type ValueWriter struct {
@@ -101,16 +100,11 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 	// write time to byteBuffer
 	timeByteData = utils.Int64ToByte(t)
 	encodeCount := s.desc.GetTimeCount()
-	log.Info("s.timeBuf size1: %d", s.timeBuf.Len())
 	if encodeCount == -1 {
 		s.timeBuf.Write(utils.BoolToByte(true))
-		log.Info("s.timeBuf size2: %d", s.timeBuf.Len())
 		s.timeBuf.Write(timeByteData)
-		log.Info("s.timeBuf size3: %d", s.timeBuf.Len())
 		s.timeBuf.Write(timeByteData)
-		log.Info("s.timeBuf size4: %d", s.timeBuf.Len())
 		s.timeBuf.Write(timeByteData)
-		log.Info("s.timeBuf size5: %d", s.timeBuf.Len())
 		s.desc.SetTimeCount(encodeCount + 1)
 	}
 	if s.desc.GetTimeCount() == tsFileConf.DeltaBlockSize {
@@ -119,13 +113,10 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 		s.timeBuf.Write(timeByteData)
 		s.desc.SetTimeCount(0)
 	}
-	log.Info("s.timeBuf size6: %d", s.timeBuf.Len())
-
-	//timeByteData = utils.Int64ToByte(t)
-	//s.timeBuf.Write(timeByteData)
+	// log.Info("s.timeBuf size: %d", s.timeBuf.Len())
 	// write value to byteBuffer
 	s.valueBuf.Write(valueByteData)
-	log.Info("s.valueBuf size1: %d", s.valueBuf.Len())
+	// log.Info("s.valueBuf size: %d", s.valueBuf.Len())
 	return
 }
 

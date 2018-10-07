@@ -53,13 +53,7 @@ func (t *TsFileIoWriter) EndChunk (size int64, totalValueCount int64) () {
 	t.currentChunkMetaData.SetTotalByteSizeOfPagesOnDisk(size)
 	t.currentChunkMetaData.SetNumOfPoints(totalValueCount)
 	t.currentRowGroupMetaData.AddTimeSeriesChunkMetaData(t.currentChunkMetaData)
-	////////////////////
-	//p := t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli[0]
-	//fmt.Printf("%p\n", t.currentRowGroupMetaData.TimeSeriesChunkMetaDataSli)
-	//fmt.Printf("%p\n", p)
-	//fmt.Printf("md:%p", t.currentChunkMetaData)
-	///////////////////////////
-	log.Info("end Chunk: %v, totalvalue: %v", t.currentChunkMetaData, totalValueCount)
+	// log.Info("end Chunk: %v, totalvalue: %v", t.currentChunkMetaData, totalValueCount)
 	t.currentChunkMetaData = nil
 
 	return
@@ -74,7 +68,7 @@ func (t *TsFileIoWriter) EndRowGroup (memSize int64) () {
 
 func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 	timeSeriesMap := fs.GetTimeSeriesMetaDatas()
-	log.Info("get time series map: %v", timeSeriesMap)
+	// log.Info("get time series map: %v", timeSeriesMap)
 	tsDeviceMetaDataMap := make(map[string]*metaData.TsDeviceMetaData)
 	for _, v := range t.rowGroupMetaDataSli {
 		if v == nil {
@@ -92,8 +86,8 @@ func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 	}
 
 	for _, tsDeviceMetaData := range tsDeviceMetaDataMap {
-		startTime := int64(0) 	//int64(0x7fffffffffffffff)
-		endTime := int64(0)		//int64(0x8000000000000000)
+		startTime := int64(1) 	//int64(0x7fffffffffffffff)
+		endTime := int64(1)		//int64(0x8000000000000000)
 		for _, rowGroup := range tsDeviceMetaData.GetRowGroups() {
 			for _, timeSeriesChunkMetaData := range rowGroup.GetTimeSeriesChunkMetaDataSli() {
 				startTime = min(startTime, timeSeriesChunkMetaData.GetStartTime())
@@ -105,16 +99,17 @@ func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 	}
 	tsFileMetaData, _ := metaData.NewTsFileMetaData(tsDeviceMetaDataMap, timeSeriesMap, tsFileConf.CurrentVersion)
 	footerIndex := t.GetPos()
-	log.Info("start to flush the footer, file pos: %s", footerIndex)
+	log.Info("start to flush meta, file pos: %d", footerIndex)
 	size := tsFileMetaData.SerializeTo(t.memBuf)
-	log.Info("t.memBuf: %s", t.memBuf)
-	log.Info("finish flushing the footer %s, file pos: %s", tsFileMetaData, t.GetPos())
+	// log.Info("t.memBuf: %s", t.memBuf)
+	log.Info("finish flushing meta %v, file pos: %d", tsFileMetaData, t.GetPos())
 	t.memBuf.Write(utils.Int32ToByte(int32(size)))
 	t.memBuf.Write([]byte(tsFileConf.MAGIC_STRING))
 
 
 	// flush mem-filemeta to file
 	t.WriteBytesToFile(t.memBuf)
+	log.Info("file pos: %d", t.GetPos())
 }
 
 func max(x, y int64) int64 {
@@ -147,6 +142,7 @@ func (t *TsFileIoWriter) StartFlushRowGroup(deviceId string, rowGroupSize int64,
 	t.currentRowGroupMetaData, _ = metaData.NewRowGroupMetaData(deviceId, 0, t.GetPos(), timeSeriesChunkMetaDataSli)
 	t.currentRowGroupMetaData.RecalculateSerializedSize()
 	rowGroupHeader, _ := header.NewRowGroupHeader(deviceId, rowGroupSize, seriesNumber)
+	log.Info("rowGroupHeader: %v", rowGroupHeader)
 	rowGroupHeader.RowGroupHeaderToMemory(t.memBuf)
 	t.rowGroupHeader = rowGroupHeader
 	// rowgroup header bytebuffer write to file
@@ -171,21 +167,38 @@ func (t *TsFileIoWriter) StartFlushChunk(sd *sensorDescriptor.SensorDescriptor, 
 	// todo set tsdigest
 	tsDigest, _ := metaData.NewTsDigest()
 	statisticsMap := make(map[string]bytes.Buffer)
-	var max bytes.Buffer
-	max.Write(statistics.GetMaxByte(tsDataType))
-	statisticsMap[MAXVALUE] = max
+	//var max bytes.Buffer
+	//max.Write(statistics.GetMaxByte(tsDataType))
+	//statisticsMap[MAXVALUE] = max
+	//var min bytes.Buffer
+	//min.Write(statistics.GetMinByte(tsDataType))
+	//statisticsMap[MINVALUE] = min
+	//var first bytes.Buffer
+	//first.Write(statistics.GetFirstByte(tsDataType))
+	//statisticsMap[FIRST] = first
+	//var sum bytes.Buffer
+	//sum.Write(statistics.GetSumByte(tsDataType))
+	//statisticsMap[SUM] = sum
+	//var last bytes.Buffer
+	//last.Write(statistics.GetLastByte(tsDataType))
+	//statisticsMap[LAST] = last
+
 	var min bytes.Buffer
 	min.Write(statistics.GetMinByte(tsDataType))
 	statisticsMap[MINVALUE] = min
-	var first bytes.Buffer
-	first.Write(statistics.GetFirstByte(tsDataType))
-	statisticsMap[FIRST] = first
-	var sum bytes.Buffer
-	sum.Write(statistics.GetSumByte(tsDataType))
-	statisticsMap[SUM] = sum
 	var last bytes.Buffer
 	last.Write(statistics.GetLastByte(tsDataType))
 	statisticsMap[LAST] = last
+	var sum bytes.Buffer
+	sum.Write(statistics.GetSumByte(tsDataType))
+	statisticsMap[SUM] = sum
+	var first bytes.Buffer
+	first.Write(statistics.GetFirstByte(tsDataType))
+	statisticsMap[FIRST] = first
+	var max bytes.Buffer
+	max.Write(statistics.GetMaxByte(tsDataType))
+	statisticsMap[MAXVALUE] = max
+
 	tsDigest.SetStatistics(statisticsMap)
 	t.currentChunkMetaData.SetDigest(*tsDigest)
 	return header.GetChunkSerializedSize(sd.GetSensorId())

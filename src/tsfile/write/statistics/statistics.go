@@ -21,7 +21,7 @@ type Statistics struct {
 	max		interface{}
 	min 	interface{}
 	first 	interface{}
-	double 	interface{}
+	//double 	interface{}
 	sum 	int64
 	last 	interface{}
 	tsDataType int16

@@ -1,4 +1,4 @@
-package enc
+package enc1
 
 import (
 	"bytes"
