@@ -40,14 +40,14 @@ func main(){
 	if sdErr != nil {
 		log.Info("init sensorDescriptor error = %s", sdErr)
 	}
-	sd2, sdErr2 := sensorDescriptor.New("sensor_2", header.FLOAT, header.PLAIN)
+	sd2, sdErr2 := sensorDescriptor.New("sensor_2", header.INT32, header.PLAIN)
 	if sdErr2 != nil {
 		log.Info("init sensorDescriptor error = %s", sdErr2)
 	}
 
 	// add sensorDescriptor to tfFileWriter
-	tfWriter.AddSensor(*sd)
-	tfWriter.AddSensor(*sd2)
+	tfWriter.AddSensor(sd)
+	tfWriter.AddSensor(sd2)
 
 	// create a tsRecord
 	ts := time.Now()
@@ -59,47 +59,51 @@ func main(){
 	}
 
 	// create two data points
-	idp, iDpErr := tsFileWriter.NewInt("sensor_1", header.INT32,20)
-	if iDpErr != nil {
-		log.Info("init int data point error.")
-	}
-	fdp, fDpErr := tsFileWriter.NewFloat("sensor_1", header.FLOAT,90.0)
+	fdp, fDpErr := tsFileWriter.NewFloat("sensor_1", header.FLOAT,1.2)
 	if fDpErr != nil {
 		log.Info("init float data point error.")
 	}
+	idp, iDpErr := tsFileWriter.NewInt("sensor_2", header.INT32,20)
+	if iDpErr != nil {
+		log.Info("init int data point error.")
+	}
 
 	// add data points to ts record
-	tr.AddTuple(*idp)
-	tr.AddTuple(*fdp)
+	tr.AddTuple(fdp)
+	tr.AddTuple(idp)
+
 
 	// todo write tsRecord to file
 	tfWriter.Write(*tr)
-	//tfWriter.Write([]byte("&TsFileData&"))
 
 
 
-	tr1, trErr1 := tsFileWriter.NewTsRecord(ts, "device_1")
-	if trErr1 != nil {
-		log.Info("init tsRecord error.")
-	}
 
-	// create two data points
-	idp1, iDpErr1 := tsFileWriter.NewInt("sensor_2", header.INT32,20)
-	if iDpErr1 != nil {
-		log.Info("init int data point error.")
-	}
-	fdp1, fDpErr1 := tsFileWriter.NewFloat("sensor_2", header.FLOAT,90.0)
-	if fDpErr1 != nil {
-		log.Info("init float data point error.")
-	}
 
-	// add data points to ts record
-	tr1.AddTuple(*idp1)
-	tr1.AddTuple(*fdp1)
 
-	// todo write tsRecord to file
-	tfWriter.Write(*tr1)
-	//tfWriter.Write([]byte("&TsFileData&"))
+	//tr1, trErr1 := tsFileWriter.NewTsRecord(ts, "device_1")
+	//if trErr1 != nil {
+	//	log.Info("init tsRecord error.")
+	//}
+	//
+	//// create two data points
+	//fdp1, fDpErr1 := tsFileWriter.NewFloat("sensor_2", header.FLOAT,90.0)
+	//if fDpErr1 != nil {
+	//	log.Info("init float data point error.")
+	//}
+	//idp1, iDpErr1 := tsFileWriter.NewInt("sensor_2", header.INT32,20)
+	//if iDpErr1 != nil {
+	//	log.Info("init int data point error.")
+	//}
+	//
+	//
+	//// add data points to ts record
+	//tr1.AddTuple(*idp1)
+	//tr1.AddTuple(*fdp1)
+	//
+	//// todo write tsRecord to file
+	//tfWriter.Write(*tr1)
+	////tfWriter.Write([]byte("&TsFileData&"))
 
 
 

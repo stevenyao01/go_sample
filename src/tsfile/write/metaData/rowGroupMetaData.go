@@ -45,7 +45,7 @@ func (r *RowGroupMetaData) GetDeviceId () (string) {
 
 func (r *RowGroupMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 	if r.sizeOfChunkSli != len(r.TimeSeriesChunkMetaDataSli) {
-		r.ReCalculateSerializedSize()
+		r.RecalculateSerializedSize()
 	}
 	var byteLen int
 
@@ -66,15 +66,6 @@ func (r *RowGroupMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 	}
 
 	return byteLen
-}
-
-func (r *RowGroupMetaData) ReCalculateSerializedSize () () {
-	r.serializedSize = 1 * 4 + len(r.deviceId) + 2 * 8 + 1 * 4
-	for _, v := range r.TimeSeriesChunkMetaDataSli {
-		r.serializedSize += v.GetSerializedSize()
-	}
-	r.sizeOfChunkSli = len(r.TimeSeriesChunkMetaDataSli)
-	return
 }
 
 func (r *RowGroupMetaData) GetTimeSeriesChunkMetaDataSli () ([]*TimeSeriesChunkMetaData) {
@@ -107,6 +98,7 @@ func (r *RowGroupMetaData) RecalculateSerializedSize () () {
 		}
 	}
 	r.sizeOfChunkSli = len(r.TimeSeriesChunkMetaDataSli)
+	return
 }
 
 func NewRowGroupMetaData(dId string, tbs int64, foocd int64, tscmds []*TimeSeriesChunkMetaData) (*RowGroupMetaData, error) {

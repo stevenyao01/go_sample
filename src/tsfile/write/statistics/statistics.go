@@ -28,7 +28,7 @@ type Statistics struct {
 	isEmpty	bool
 }
 
-func (s *Statistics)Serialize (buffer bytes.Buffer) () {
+func (s *Statistics)Serialize (buffer *bytes.Buffer) () {
 	buffer.Write(s.GetMaxByte(s.tsDataType))
 	buffer.Write(s.GetMinByte(s.tsDataType))
 	buffer.Write(s.GetFirstByte(s.tsDataType))
@@ -52,11 +52,11 @@ func GetStatistics(tdt int16) (*Statistics) {
 		//int32
 		newStatistics, _ := NewInt()
 		newStatistics.tsDataType = tdt
-		newStatistics.max = 0
-		newStatistics.min = 0
+		newStatistics.max = int32(0)
+		newStatistics.min = int32(0)
 		newStatistics.sum = 0
-		newStatistics.first = 0
-		newStatistics.last = 0
+		newStatistics.first = int32(0)
+		newStatistics.last = int32(0)
 		return newStatistics
 	case 2:
 		//int64
@@ -247,6 +247,10 @@ func (s *Statistics)GetLastByte(tdt int16)([]byte){
 
 func (s *Statistics) GetSumByte(tdt int16)([]byte){
 	return utils.Int64ToByte(s.sum)
+}
+
+func (s *Statistics) GetserializedSize (tdt int16) (int) {
+	return len(s.GetMaxByte(tdt)) + len(s.GetMinByte(tdt)) + len(s.GetFirstByte(tdt)) + len(s.GetLastByte(tdt)) + 8
 }
 
 func (s *Statistics) UpdateStatBool (value bool) () {

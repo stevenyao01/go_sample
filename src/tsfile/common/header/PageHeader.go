@@ -17,7 +17,7 @@ type PageHeader struct {
 	serializedSize			int32
 }
 
-func (p *PageHeader)PageHeaderToMemory(buffer bytes.Buffer)(int32){
+func (p *PageHeader)PageHeaderToMemory(buffer *bytes.Buffer)(int32){
 	// todo write header to buffer
 	buffer.Write(utils.Int32ToByte(p.uncompressedSize))
 	buffer.Write(utils.Int32ToByte(p.compressedSize))
@@ -26,6 +26,12 @@ func (p *PageHeader)PageHeaderToMemory(buffer bytes.Buffer)(int32){
 	buffer.Write(utils.Int64ToByte(p.min_timestamp))
 	p.statistics.Serialize(buffer)
 	return p.serializedSize
+}
+
+func CalculatePageHeaderSize (tsDataType int16) (int) {
+	pHeaderSize := 3 * 4 + 2 * 8
+	statisticsSize := statistics.GetStatistics(tsDataType).GetserializedSize(tsDataType)
+	return pHeaderSize + statisticsSize
 }
 
 func NewPageHeader(ucs int32, cs int32, nov int32, sts statistics.Statistics, max_t int64, min_t int64, tsDataType int16) (*PageHeader, error) {

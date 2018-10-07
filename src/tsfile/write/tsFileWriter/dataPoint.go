@@ -26,7 +26,7 @@ func (d *DataPoint) GetSensorId() (string) {
 	return d.sensorId
 }
 
-func (d *DataPoint) Write(t int64, sw SeriesWriter) (bool) {
+func (d *DataPoint) Write(t int64, sw *SeriesWriter) (bool) {
 	if sw.GetTsDeviceId() == "" {
 		log.Info("give seriesWriter is null, do nothing and return.")
 		return false

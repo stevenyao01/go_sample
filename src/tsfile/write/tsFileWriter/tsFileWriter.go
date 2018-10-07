@@ -30,7 +30,7 @@ type TsFileWriter struct {
 }
 
 
-func (t *TsFileWriter) AddSensor(sd sensorDescriptor.SensorDescriptor) ([]byte) {
+func (t *TsFileWriter) AddSensor(sd *sensorDescriptor.SensorDescriptor) ([]byte) {
  	log.Info("enter tsFileWriter->AddSensor()")
  	if _, ok := t.schema.GetSensorDescriptiorMap()[sd.GetSensorId()]; !ok {
 		t.schema.GetSensorDescriptiorMap()[sd.GetSensorId()] = sd
@@ -52,7 +52,7 @@ func (t *TsFileWriter) AddSensor(sd sensorDescriptor.SensorDescriptor) ([]byte) 
 func (t *TsFileWriter)checkMemorySizeAndMayFlushGroup()(bool){
 	if t.recordCount >= t.recordCountForNextMemCheck {
 		// calculate all group size
-		memSize := calculateMemSizeForAllGroup()
+		memSize := t.CalculateMemSizeForAllGroup()
 		if memSize > t.rowGroupSizeThreshold {
 			log.Info("start_write_row_group, memory space occupy: %s", memSize)
 			t.recordCountForNextMemCheck = t.rowGroupSizeThreshold / int64(t.oneRowMaxSize)
@@ -79,11 +79,12 @@ func (t *TsFileWriter)flushAllRowGroups(isFillRowGroup bool)(bool){
 			for _, v := range t.groupDevices {
 				v.PreFlush()
 			}
-			for k, _ := range t.groupDevices {
+			for k, v := range t.groupDevices {
 				groupDevice := t.groupDevices[k]
-				rowGroupSize := groupDevice.GetCurrentRowGroupSize()
+				//rowGroupSize := 1 * 4 + 1 * 8 + len(v.deviceId) + 1 * 4
+				rowGroupSize := v.GetCurrentRowGroupSize()
 				// write rowgroup header to file
-				t.tsFileIoWriter.StartFlushRowGroup(k, rowGroupSize, groupDevice.GetSeriesNumber())
+				t.tsFileIoWriter.StartFlushRowGroup(k, int64(rowGroupSize), groupDevice.GetSeriesNumber())
 				// write chunk to file
 				groupDevice.FlushToFileWriter(t.tsFileIoWriter)
 				// finished write file(and then write filemeta to file)
@@ -109,7 +110,7 @@ func (t *TsFileWriter) Write(tr TsRecord) (bool) {
 	if t.checkIsDeviceExist(tr, *t.schema) {
 		//var r RowGroupWriter;
 		gd := t.groupDevices[tr.GetDeviceId()]
-		gd.Write(tr.GetTime(), tr.GetDataPointMap())
+		gd.Write(tr.GetTime(), tr.GetDataPointSli())
 		//(t.groupDevices[tr.GetDeviceId()]).Write(tr.GetTime(), tr.GetDataPointMap())
 		t.recordCount = t.recordCount + 1
 		return t.checkMemorySize()
@@ -128,7 +129,7 @@ func (t *TsFileWriter) Close() (bool) {
 	//t.tsFileIoWriter.tsIoFile.Close()
 
 
-	calculateMemSizeForAllGroup()
+	t.CalculateMemSizeForAllGroup()
 	t.flushAllRowGroups(false)
 	t.tsFileIoWriter.EndFile(*t.schema)
 	return true
@@ -136,7 +137,7 @@ func (t *TsFileWriter) Close() (bool) {
 
 func (t *TsFileWriter)checkMemorySize() (bool) {
 	if t.recordCount >= t.recordCountForNextMemCheck {
-		memSize := calculateMemSizeForAllGroup()
+		memSize := t.CalculateMemSizeForAllGroup()
 		if memSize >= t.rowGroupSizeThreshold {
 			log.Info("start write rowGroup, memory space occupy: %v", memSize)
 			if t.oneRowMaxSize != 0 {
@@ -156,8 +157,12 @@ func (t *TsFileWriter)checkMemorySize() (bool) {
 	return false
 }
 
-func calculateMemSizeForAllGroup()(int64){
+func (t *TsFileWriter) CalculateMemSizeForAllGroup()(int64){
 	// todo calculate all group memory size
+	var memTotalSize int64 = 0
+	for _, v := range t.groupDevices {
+		memTotalSize += v.UpdateMaxGroupMemSize()
+	}
 
 	// return max size for write rowGroupHeader
 	return 128 * 1024 *1024
@@ -178,9 +183,10 @@ func (t *TsFileWriter) checkIsDeviceExist(tr TsRecord, schema fileSchema.FileSch
 		groupDevice = t.groupDevices[tr.GetDeviceId()]
 	}
 	schemaSensorDescriptorMap := schema.GetSensorDescriptiorMap()
-	for k, v := range tr.GetDataPointMap() {
+	for k, v := range tr.GetDataPointSli() {
 		if contain, _ := utils.MapContains(schemaSensorDescriptorMap, v.GetSensorId()); contain {
 			//groupDevice.AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
+			log.Info("gggggg:%p", t.groupDevices[tr.GetDeviceId()])
 			t.groupDevices[tr.GetDeviceId()].AddSeriesWriter(schemaSensorDescriptorMap[v.GetSensorId()], tsFileConf.PageSizeInByte)
 		} else {
 			log.Error("input sensor is invalid: ", v.GetSensorId())

@@ -27,6 +27,8 @@ type TsFileIoWriter struct {
 	currentRowGroupMetaData			*metaData.RowGroupMetaData
 	currentChunkMetaData			*metaData.TimeSeriesChunkMetaData
 	rowGroupMetaDataSli				[]*metaData.RowGroupMetaData
+	rowGroupHeader					*header.RowGroupHeader
+	chunkHeader						*header.ChunkHeader
 }
 
 const(
@@ -57,7 +59,7 @@ func (t *TsFileIoWriter) EndChunk (size int64, totalValueCount int64) () {
 	//fmt.Printf("%p\n", p)
 	//fmt.Printf("md:%p", t.currentChunkMetaData)
 	///////////////////////////
-	log.Info("end Chunk: %s, totalvalue: %s", t.currentChunkMetaData, totalValueCount)
+	log.Info("end Chunk: %v, totalvalue: %v", t.currentChunkMetaData, totalValueCount)
 	t.currentChunkMetaData = nil
 
 	return
@@ -66,14 +68,14 @@ func (t *TsFileIoWriter) EndChunk (size int64, totalValueCount int64) () {
 func (t *TsFileIoWriter) EndRowGroup (memSize int64) () {
 	t.currentRowGroupMetaData.SetTotalByteSize(memSize)
 	t.rowGroupMetaDataSli = append(t.rowGroupMetaDataSli, t.currentRowGroupMetaData)
-	log.Info("end row group: %s", t.currentRowGroupMetaData)
+	log.Info("end row group: %v", t.currentRowGroupMetaData)
 	//t.currentRowGroupMetaData = nil
 }
 
 func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 	timeSeriesMap := fs.GetTimeSeriesMetaDatas()
-	log.Info("get time series map: %s", timeSeriesMap)
-	tsDeviceMetaDataMap := make(map[string]metaData.TsDeviceMetaData)
+	log.Info("get time series map: %v", timeSeriesMap)
+	tsDeviceMetaDataMap := make(map[string]*metaData.TsDeviceMetaData)
 	for _, v := range t.rowGroupMetaDataSli {
 		if v == nil {
 			continue
@@ -81,10 +83,10 @@ func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 		currentDevice := v.GetDeviceId()
 		if _, contain := tsDeviceMetaDataMap[currentDevice]; !contain {
 			tsDeviceMetaData, _ := metaData.NewTimeDeviceMetaData()
-			tsDeviceMetaDataMap[currentDevice] = *tsDeviceMetaData
+			tsDeviceMetaDataMap[currentDevice] = tsDeviceMetaData
 		}
 		tdmd := tsDeviceMetaDataMap[currentDevice]
-		tdmd.AddRowGroupMetaData(*v)
+		tdmd.AddRowGroupMetaData(v)
 		tsDeviceMetaDataMap[currentDevice] = tdmd
 		// tsDeviceMetaDataMap[currentDevice].AddRowGroupMetaData(*v)
 	}
@@ -138,27 +140,30 @@ func (t *TsFileIoWriter) WriteMagic()(int){
 	return n
 }
 
-func (t *TsFileIoWriter) StartFlushRowGroup(deviceId string, rowGroupSize int64, seriesNumber int32)(int32){
+func (t *TsFileIoWriter) StartFlushRowGroup(deviceId string, rowGroupSize int64, seriesNumber int32)(int){
 	log.Info("start flush rowgroup.")
 	// timeSeriesChunkMetaDataMap := make(map[string]metaData.TimeSeriesChunkMetaData)
 	timeSeriesChunkMetaDataSli := make([]*metaData.TimeSeriesChunkMetaData, 0)
 	t.currentRowGroupMetaData, _ = metaData.NewRowGroupMetaData(deviceId, 0, t.GetPos(), timeSeriesChunkMetaDataSli)
+	t.currentRowGroupMetaData.RecalculateSerializedSize()
 	rowGroupHeader, _ := header.NewRowGroupHeader(deviceId, rowGroupSize, seriesNumber)
 	rowGroupHeader.RowGroupHeaderToMemory(t.memBuf)
+	t.rowGroupHeader = rowGroupHeader
 	// rowgroup header bytebuffer write to file
 	t.WriteBytesToFile(t.memBuf)
 	// truncate bytebuffer to empty
 	t.memBuf.Reset()
 
-	return rowGroupHeader.GetSerializedSize()
+	return header.GetRowGroupSerializedSize(deviceId)
 }
 
-func (t *TsFileIoWriter) StartFlushChunk(sd sensorDescriptor.SensorDescriptor, compressionType int16,
+func (t *TsFileIoWriter) StartFlushChunk(sd *sensorDescriptor.SensorDescriptor, compressionType int16,
 								tsDataType int16, encodingType int16, statistics statistics.Statistics,
 								maxTimestamp int64, minTimestamp int64, pageBufSize int, numOfPages int)(int){
 	t.currentChunkMetaData, _ = metaData.NewTimeSeriesChunkMetaData(sd.GetSensorId(), t.GetPos(), minTimestamp, maxTimestamp)
 	chunkHeader, _ := header.NewChunkHeader(sd.GetSensorId(), pageBufSize, tsDataType, compressionType, encodingType, numOfPages, 0)
 	chunkHeader.ChunkHeaderToMemory(t.memBuf)
+	t.chunkHeader = chunkHeader
 	// chunk header bytebuffer write to file
 	t.WriteBytesToFile(t.memBuf)
 	// truncate bytebuffer to empty
@@ -173,17 +178,17 @@ func (t *TsFileIoWriter) StartFlushChunk(sd sensorDescriptor.SensorDescriptor, c
 	min.Write(statistics.GetMinByte(tsDataType))
 	statisticsMap[MINVALUE] = min
 	var first bytes.Buffer
-	first.Write(statistics.GetMinByte(tsDataType))
+	first.Write(statistics.GetFirstByte(tsDataType))
 	statisticsMap[FIRST] = first
 	var sum bytes.Buffer
-	sum.Write(statistics.GetMinByte(tsDataType))
+	sum.Write(statistics.GetSumByte(tsDataType))
 	statisticsMap[SUM] = sum
 	var last bytes.Buffer
-	last.Write(statistics.GetMinByte(tsDataType))
+	last.Write(statistics.GetLastByte(tsDataType))
 	statisticsMap[LAST] = last
 	tsDigest.SetStatistics(statisticsMap)
 	t.currentChunkMetaData.SetDigest(*tsDigest)
-	return chunkHeader.GetSerializedSize()
+	return header.GetChunkSerializedSize(sd.GetSensorId())
 }
 
 func (t *TsFileIoWriter) WriteBytesToFile (buf *bytes.Buffer) () {

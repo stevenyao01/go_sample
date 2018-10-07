@@ -70,10 +70,6 @@ func (c *ChunkHeader) ChunkHeaderToMemory(buffer *bytes.Buffer)(int32){
 	return int32(c.serializedSize)
 }
 
-func (c *ChunkHeader) GetSerializedSize () (int) {
-	return c.serializedSize
-}
-
 func (c *ChunkHeader) GetMaxTombstoneTime () (mtt int64) {
 	return c.maxTombstoneTime
 }
@@ -82,6 +78,9 @@ func (c *ChunkHeader) SetMaxTombstoneTime (mtt int64) () {
 	c.maxTombstoneTime = mtt
 }
 
+func GetChunkSerializedSize (sensorId string) (int) {
+	return 3 * 4 + 3 * 2 + len(sensorId) + 8
+}
 
 func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int, mtt int64) (*ChunkHeader, error) {
 	// todo

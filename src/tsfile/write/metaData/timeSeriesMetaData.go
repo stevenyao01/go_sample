@@ -23,7 +23,7 @@ type TimeSeriesMetaData struct {
 //	return 0
 //}
 
-func (t *TimeSeriesMetaData) Serialize (buf bytes.Buffer) (int) {
+func (t *TimeSeriesMetaData) Serialize (buf *bytes.Buffer) (int) {
 	var byteLen int
 	if t.sensorId == "" {
 		n1, _ := buf.Write(utils.BoolToByte(false))

@@ -11,6 +11,9 @@ package tsFileWriter
 import (
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
+	"github.com/go_sample/src/tsfile/write/sensorDescriptor"
+	"github.com/go_sample/src/tsfile/common/tsFileConf"
+	"github.com/go_sample/src/tsfile/common/log"
 )
 
 type ValueWriter struct {
@@ -23,6 +26,7 @@ type ValueWriter struct {
 	// todo these buffer should be encoding
 	timeBuf 			*bytes.Buffer
 	valueBuf 			*bytes.Buffer
+	desc	 			*sensorDescriptor.SensorDescriptor
 	//buf := bytes.NewBuffer([]byte{})
 }
 
@@ -34,8 +38,8 @@ func (s *ValueWriter) GetByteBuffer()(*bytes.Buffer){
 	timeSize := s.timeBuf.Len()
 	encodeBuffer := bytes.NewBuffer([]byte{})
 
-	// write timeBuf size
-	encodeBuffer.Write(utils.Int32ToByte(int32(timeSize)))
+	//// write timeBuf size
+	//encodeBuffer.Write(utils.Int32ToByte(int32(timeSize)))
 
 	//声明一个空的slice,容量为timebuf的长度
 	timeSlice := make([]byte, timeSize)
@@ -96,9 +100,32 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 	}
 	// write time to byteBuffer
 	timeByteData = utils.Int64ToByte(t)
-	s.timeBuf.Write(timeByteData)
+	encodeCount := s.desc.GetTimeCount()
+	log.Info("s.timeBuf size1: %d", s.timeBuf.Len())
+	if encodeCount == -1 {
+		s.timeBuf.Write(utils.BoolToByte(true))
+		log.Info("s.timeBuf size2: %d", s.timeBuf.Len())
+		s.timeBuf.Write(timeByteData)
+		log.Info("s.timeBuf size3: %d", s.timeBuf.Len())
+		s.timeBuf.Write(timeByteData)
+		log.Info("s.timeBuf size4: %d", s.timeBuf.Len())
+		s.timeBuf.Write(timeByteData)
+		log.Info("s.timeBuf size5: %d", s.timeBuf.Len())
+		s.desc.SetTimeCount(encodeCount + 1)
+	}
+	if s.desc.GetTimeCount() == tsFileConf.DeltaBlockSize {
+		s.timeBuf.Write(timeByteData)
+		s.timeBuf.Write(timeByteData)
+		s.timeBuf.Write(timeByteData)
+		s.desc.SetTimeCount(0)
+	}
+	log.Info("s.timeBuf size6: %d", s.timeBuf.Len())
+
+	//timeByteData = utils.Int64ToByte(t)
+	//s.timeBuf.Write(timeByteData)
 	// write value to byteBuffer
 	s.valueBuf.Write(valueByteData)
+	log.Info("s.valueBuf size1: %d", s.valueBuf.Len())
 	return
 }
 
@@ -118,11 +145,12 @@ func (s *ValueWriter) Reset() () {
 //}
 
 
-func NewValueWriter() (*ValueWriter, error) {
+func NewValueWriter(d *sensorDescriptor.SensorDescriptor) (*ValueWriter, error) {
 
 	return &ValueWriter{
 		//sensorId:sId,
 		timeBuf:bytes.NewBuffer([]byte{}),
 		valueBuf:bytes.NewBuffer([]byte{}),
+		desc:d,
 	},nil
 }

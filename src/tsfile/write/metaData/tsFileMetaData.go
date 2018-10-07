@@ -15,8 +15,8 @@ import (
 )
 
 type TsFileMetaData struct {
-	deviceMap							map[string]TsDeviceMetaData
-	timeSeriesMetaDataMap				map[string]TimeSeriesMetaData
+	deviceMap							map[string]*TsDeviceMetaData
+	timeSeriesMetaDataMap				map[string]*TimeSeriesMetaData
 	currentVersion						int
 	createBy							string
 	firstTimeSeriesMetadataOffset		int64
@@ -36,14 +36,12 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 		byteLen += n
 	} else {
 		n := len(t.deviceMap)
-		log.Info("nnnn: %d", n)
-		log.Info("mmmm:%d", int32(n))
-		d1, _ := buf.Write(utils.Int32ToByte(int32(len(t.deviceMap))))
+		d1, _ := buf.Write(utils.Int32ToByte(int32(n)))
 		byteLen += d1
-		for i := 0;i < 100 ;i++ {
-			d11, _ := buf.Write(utils.Int32ToByte(int32(3)))
-			byteLen += d11
-		}
+		//for i := 0;i < 100 ;i++ {
+		//	d11, _ := buf.Write(utils.Int32ToByte(int32(3)))
+		//	byteLen += d11
+		//}
 
 		for k, v := range t.deviceMap {
 			// write string tsDeviceMetaData key
@@ -64,7 +62,7 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 		byteLen += e2
 		for _, vv := range t.timeSeriesMetaDataMap {
 			// timeSeriesMetaData SerializeTo
-			byteLen += vv.Serialize(*buf)
+			byteLen += vv.Serialize(buf)
 			log.Info("vv: %s", vv)
 		}
 	}
@@ -99,7 +97,7 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 
 
 
-func NewTsFileMetaData(tdmd map[string]TsDeviceMetaData, tss map[string]TimeSeriesMetaData, version int) (*TsFileMetaData, error) {
+func NewTsFileMetaData(tdmd map[string]*TsDeviceMetaData, tss map[string]*TimeSeriesMetaData, version int) (*TsFileMetaData, error) {
 
 	return &TsFileMetaData{
 		deviceMap:tdmd,

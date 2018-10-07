@@ -22,8 +22,8 @@ func (r *RowGroupHeader) RowGroupHeaderToMemory (buffer *bytes.Buffer) (int32) {
 	return r.serializedSize
 }
 
-func (r *RowGroupHeader) GetSerializedSize () (int32) {
-	return r.serializedSize
+func GetRowGroupSerializedSize (deviceId string) (int) {
+	return 1 * 4 + 1 * 8 + len(deviceId) + 1 * 4
 }
 
 func NewRowGroupHeader(dId string, rgs int64, sn int32) (*RowGroupHeader, error) {

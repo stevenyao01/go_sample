@@ -16,23 +16,23 @@ import (
 type TsDeviceMetaData struct {
 	sensorId							string
 	tsDataType							int16
-	rowGroupmetaDataSli					[]RowGroupMetaData
+	rowGroupmetaDataSli					[]*RowGroupMetaData
 	sizeOfRowGroupMetaDataSli			int
 	serializedSize						int
 	startTime							int64
 	endTime								int64
 }
 
-func (t *TsDeviceMetaData) AddRowGroupMetaData (rgmd RowGroupMetaData) () {
+func (t *TsDeviceMetaData) AddRowGroupMetaData (rgmd *RowGroupMetaData) () {
 	if len(t.rowGroupmetaDataSli) == 0 {
-		t.rowGroupmetaDataSli = make([]RowGroupMetaData, 0)
+		t.rowGroupmetaDataSli = make([]*RowGroupMetaData, 0)
 	}
 	t.rowGroupmetaDataSli = append(t.rowGroupmetaDataSli, rgmd)
 	t.sizeOfRowGroupMetaDataSli += 1
 	t.serializedSize += rgmd.GetserializedSize()
 }
 
-func (t *TsDeviceMetaData) GetRowGroups () ([]RowGroupMetaData) {
+func (t *TsDeviceMetaData) GetRowGroups () ([]*RowGroupMetaData) {
 	return t.rowGroupmetaDataSli
 }
 
@@ -91,7 +91,7 @@ func (t *TsDeviceMetaData) ReCalculateSerializedSize () () {
 func NewTimeDeviceMetaData() (*TsDeviceMetaData, error) {
 
 	return &TsDeviceMetaData{
-		rowGroupmetaDataSli:make([]RowGroupMetaData, 0),
+		rowGroupmetaDataSli:make([]*RowGroupMetaData, 0),
 		serializedSize:2 * 8 + 1 * 4,
 	},nil
 }

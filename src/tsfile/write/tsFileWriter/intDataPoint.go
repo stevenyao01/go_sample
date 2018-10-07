@@ -13,8 +13,8 @@ import (
 
 type IntDataPoint struct {
 	sensorId			string
-	tsDataType			int
-	value 				int
+	tsDataType			int16
+	value 				int32
 }
 
 //func (d *DataPoint) Write(v []byte) ([]byte,error) {
@@ -26,7 +26,7 @@ type IntDataPoint struct {
 //}
 
 
-func NewInt(sId string, tdt int, val int) (*DataPoint, error) {
+func NewInt(sId string, tdt int, val int32) (*DataPoint, error) {
 
 	// todo
 	return &DataPoint{

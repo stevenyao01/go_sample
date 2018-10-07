@@ -16,7 +16,8 @@ import (
 type TsRecord struct {
 	time				int64
 	deviceId			string
-	dataPointMap		map[string]DataPoint
+	//dataPointMap		map[string]*DataPoint
+	DataPointSli		[]*DataPoint
 	m 					sync.Mutex
 }
 
@@ -26,10 +27,11 @@ func (t *TsRecord) SetTime(time time.Time) () {
 	return
 }
 
-func (t *TsRecord) AddTuple(tuple DataPoint) () {
+func (t *TsRecord) AddTuple(tuple *DataPoint) () {
 	//PushBack(t, tuple)
 	// t.dataPointMap[t.deviceId] = tuple
-	t.dataPointMap[t.deviceId] = tuple
+	//t.dataPointMap[t.deviceId] = tuple
+	t.DataPointSli = append(t.DataPointSli, tuple)
 	return
 }
 
@@ -41,8 +43,8 @@ func (t *TsRecord) GetDeviceId() (string) {
 	return t.deviceId
 }
 
-func (t *TsRecord) GetDataPointMap() (map[string]DataPoint) {
-	return t.dataPointMap
+func (t *TsRecord) GetDataPointSli() ([]*DataPoint) {
+	return t.DataPointSli
 }
 
 //func PushBack(t *TsRecord, tuple dataPoint.DataPoint) {
@@ -108,6 +110,7 @@ func NewTsRecord (t time.Time, dId string) (*TsRecord, error) {
 	return &TsRecord{
 		time:t.Unix(),
 		deviceId:dId,
-		dataPointMap:make(map[string]DataPoint),
+		//dataPointMap:make(map[string]*DataPoint),
+		DataPointSli:make([]*DataPoint, 0),
 	},nil
 }

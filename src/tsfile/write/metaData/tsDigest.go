@@ -11,6 +11,7 @@ package metaData
 import (
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
+	"github.com/go_sample/src/tsfile/common/log"
 )
 
 type TsDigest struct {
@@ -30,6 +31,7 @@ func (t *TsDigest) ReCalculateSerializedSize () () {
 	t.serializedSize = 4
 	if t.statistics != nil {
 		for k, v := range t.statistics {
+			log.Info("key: %s, k: %d, v: %d", k, len(k), v.Len())
 			t.serializedSize += 4 + len(k) + 4 + v.Len()
 		}
 		t.sizeOfList = len(t.statistics)
@@ -63,7 +65,7 @@ func (t *TsDigest) serializeTo (buf *bytes.Buffer) (int) {
 			n5, _ := buf.Write(utils.Int32ToByte(int32(v.Cap())))
 			byteLen += n5
 
-			timeSlice := make([]byte, len(t.statistics))
+			timeSlice := make([]byte, v.Len())
 			v.Read(timeSlice)
 			n6, _ := buf.Write(timeSlice)
 			byteLen += n6

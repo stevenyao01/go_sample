@@ -24,7 +24,7 @@ type TimeSeriesChunkMetaData struct {
 }
 
 func (t *TimeSeriesChunkMetaData) GetSerializedSize () (int) {
-	if t.valueStatistics.statistics == nil {
+	if t.valueStatistics.sizeOfList <= 0 {
 		return 1 * 4 + len(t.sensorId) + 5 * 8 + t.valueStatistics.GetNullDigestSize()
 	}
 	return 1 * 4 + len(t.sensorId) + 5 * 8 + t.valueStatistics.GetSerializedSize()
@@ -69,7 +69,7 @@ func (t *TimeSeriesChunkMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 	n7, _ := buf.Write(utils.Int64ToByte(t.endTime))
 	byteLen += n7
 
-	if len(t.valueStatistics.statistics) <= 0 {
+	if t.valueStatistics.sizeOfList <= 0 {
 		byteLen += t.valueStatistics.GetNullDigestSize()
 	} else {
 		// tsDigest serializeTo

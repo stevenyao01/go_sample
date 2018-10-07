@@ -16,12 +16,22 @@ type SensorDescriptor struct {
 	sensorId			string
 	tsDataType			int16
 	tsEncoding			int16
+	timeCount			int
 
 	//typeConverter		TsDataTypeConverter
 	//encodingConverter	TsEncodingConverter
 	//compressor		Compressor
 	//conf 				TsFileConfig
 	//props 				make(map[string]string)
+}
+
+func (s *SensorDescriptor) GetTimeCount() (int) {
+	return s.timeCount
+}
+
+func (s *SensorDescriptor) SetTimeCount(count int) () {
+	s.timeCount = count
+	return
 }
 
 func (s *SensorDescriptor) GetSensorId() (string) {
@@ -53,5 +63,6 @@ func New(sId string, tdt int16, te int16) (*SensorDescriptor, error) {
 		sensorId:sId,
 		tsDataType:tdt,
 		tsEncoding:te,
+		timeCount:-1,
 		},nil
 }

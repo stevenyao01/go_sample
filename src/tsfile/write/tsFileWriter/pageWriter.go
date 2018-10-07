@@ -18,7 +18,7 @@ import (
 
 type PageWriter struct {
 	compressor 			string //Compressor
-	desc 				sensorDescriptor.SensorDescriptor
+	desc 				*sensorDescriptor.SensorDescriptor
 	// todo this buf should change to compert type
 	pageBuf 			*bytes.Buffer
 	totalValueCount		int64
@@ -29,20 +29,24 @@ type PageWriter struct {
 func (p *PageWriter) WritePageHeaderAndDataIntoBuff(dataBuffer *bytes.Buffer, valueCount int, sts statistics.Statistics, maxTimestamp int64, minTimestamp int64) (int) {
 	//this uncompressedSize should be calculate from timeBuf and valueBuf
 	uncompressedSize := dataBuffer.Len()
-	compressedSize := 0
+	compressedSize := uncompressedSize
 	pageHeader, pageHeaderErr := header.NewPageHeader(int32(uncompressedSize), int32(compressedSize), int32(valueCount), sts, maxTimestamp, minTimestamp, p.desc.GetTsDataType())
 	if pageHeaderErr != nil {
 		log.Error("init pageHeader error: ", pageHeaderErr)
 	}
 	// write pageheader to pageBuf
-	pageHeader.PageHeaderToMemory(*p.pageBuf)
+	log.Info("start to flush a page header into buffer, buf pos: %d", p.pageBuf.Len())
+	pageHeader.PageHeaderToMemory(p.pageBuf)
+	log.Info("finished to flush a page header into buffer, buf pos: %d", p.pageBuf.Len())
 
 	// write pageData to pageBuf
 	//声明一个空的slice,容量为timebuf的长度
 	timeSlice := make([]byte, dataBuffer.Len())
 	//把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
 	dataBuffer.Read(timeSlice)
+	log.Info("start to flush a page data into buffer, buf pos: %d", p.pageBuf.Len())
 	p.pageBuf.Write(timeSlice)
+	log.Info("finished to flush a page data into buffer, buf pos: %d", p.pageBuf.Len())
 	p.totalValueCount += int64(valueCount)
 	return 0
 }
@@ -56,8 +60,8 @@ func (p *PageWriter) WriteAllPagesOfSeriesToTsFile (tsFileIoWriter *TsFileIoWrit
 	preSize := tsFileIoWriter.GetPos()
 	// write all pages to file
 	tsFileIoWriter.WriteBytesToFile(p.pageBuf)
-	// after write page, reset pageBuf
-	p.pageBuf.Reset()
+	//// after write page, reset pageBuf
+	//p.pageBuf.Reset()
 	dataSize := tsFileIoWriter.GetPos() - preSize
 	chunkSize := int64(chunkHeaderSize) + dataSize
 	tsFileIoWriter.EndChunk(chunkSize, p.totalValueCount)
@@ -71,8 +75,19 @@ func (p *PageWriter) Reset () () {
 	return
 }
 
+func (p *PageWriter) EstimateMaxPageMemSize () (int) {
+	pageSize := p.pageBuf.Len()
+	pageHeaderSize := header.CalculatePageHeaderSize(p.desc.GetTsDataType())
+	return pageSize + pageHeaderSize
+}
 
-func NewPageWriter(sd sensorDescriptor.SensorDescriptor) (*PageWriter, error) {
+func (p *PageWriter) GetCurrentDataSize () (int) {
+	size := p.pageBuf.Len()
+	return size
+}
+
+
+func NewPageWriter(sd *sensorDescriptor.SensorDescriptor) (*PageWriter, error) {
 	// todo do measurement init and memory check
 
 	return &PageWriter{

@@ -13,13 +13,14 @@ import (
 	"github.com/go_sample/src/tsfile/common/tsFileConf"
 	"github.com/go_sample/src/tsfile/common/log"
 	"github.com/go_sample/src/tsfile/write/statistics"
+	"github.com/go_sample/src/tsfile/common/header"
 )
 
 type SeriesWriter struct {
 	deviceId			string
 	dataSeriesWriters	map[string]SeriesWriter
 
-	desc				sensorDescriptor.SensorDescriptor
+	desc				*sensorDescriptor.SensorDescriptor
 	tsDataType 			int16
 	pageWriter			PageWriter
 	/* page size threshold 	*/
@@ -50,6 +51,13 @@ func (s *SeriesWriter) GetTsDeviceId() (string) {
 
 func (s *SeriesWriter) GetNumOfPages() (int) {
 	return s.numOfPages
+}
+
+func (s *SeriesWriter) GetCurrentChunkSize (sId string) (int) {
+	//return int64(tfiw.chunkHeader.GetChunkSerializedSize()) + s.pageWriter.GetCurrentDataSize()
+	chunkHeaderSize := header.GetChunkSerializedSize(sId)
+	size := chunkHeaderSize + s.pageWriter.GetCurrentDataSize()
+	return  size
 }
 
 func (s *SeriesWriter) Write(t int64, value interface{}) (bool) {
@@ -95,6 +103,18 @@ func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 	}
 }
 
+func (s *SeriesWriter) PreFlush () () {
+	if s.valueCount > 0 {
+		s.WritePage()
+	}
+}
+
+func (s *SeriesWriter) EstimateMaxSeriesMemSize () (int64) {
+	valueMemSize := s.valueWriter.timeBuf.Len() + s.valueWriter.valueBuf.Len()
+	pageMemSize := s.pageWriter.EstimateMaxPageMemSize()
+	return int64(valueMemSize + pageMemSize)
+}
+
 func (s *SeriesWriter) WritePage()(){
 	s.pageWriter.WritePageHeaderAndDataIntoBuff(s.valueWriter.GetByteBuffer(), s.valueCount, s.pageStatistics, s.time, s.minTimestamp)
 	// todo pageStatistics
@@ -114,8 +134,8 @@ func (s *SeriesWriter) ResetPageStatistics()(){
 }
 
 
-func NewSeriesWriter(dId string, d sensorDescriptor.SensorDescriptor, pw PageWriter, pst int) (*SeriesWriter, error) {
-	vw, _ := NewValueWriter()
+func NewSeriesWriter(dId string, d *sensorDescriptor.SensorDescriptor, pw PageWriter, pst int) (*SeriesWriter, error) {
+	vw, _ := NewValueWriter(d)
 	return &SeriesWriter{
 		deviceId:dId,
 		desc:d,
@@ -129,5 +149,6 @@ func NewSeriesWriter(dId string, d sensorDescriptor.SensorDescriptor, pw PageWri
 		seriesStatistics:*statistics.GetStatistics(d.GetTsDataType()),
 		pageStatistics:*statistics.GetStatistics(d.GetTsDataType()),
 		valueWriter:*vw,
+		minTimestamp:-1,
 	},nil
 }

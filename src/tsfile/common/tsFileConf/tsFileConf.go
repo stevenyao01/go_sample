@@ -50,7 +50,7 @@ const (
 	DOUBLE_VALUE_LENGTH = 7
 
 	// Default block size of two-diff. delta encoding is 128
-	deltaBlockSize = 128
+	DeltaBlockSize = 128
 
 	// Bitmap configuration
 	BITMAP_BITWIDTH = 1
