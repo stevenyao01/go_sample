@@ -9,7 +9,9 @@ package sensorDescriptor
  */
 
 import (
+	"github.com/go_sample/src/tsfile/common/compress"
 	//"github.com/go_sample/src/tsfile/common/log"
+	"github.com/go_sample/src/tsfile/common/header"
 )
 
 type SensorDescriptor struct {
@@ -17,10 +19,12 @@ type SensorDescriptor struct {
 	tsDataType			int16
 	tsEncoding			int16
 	timeCount			int
+	compressor			*compress.Encompress
+	tsCompresstionType	int16
 
 	//typeConverter		TsDataTypeConverter
 	//encodingConverter	TsEncodingConverter
-	//compressor		Compressor
+
 	//conf 				TsFileConfig
 	//props 				make(map[string]string)
 }
@@ -46,9 +50,13 @@ func (s *SensorDescriptor) GetTsEncoding() (int16) {
 	return s.tsEncoding
 }
 
+func (s *SensorDescriptor) GetCompresstionType() (int16) {
+	return s.tsCompresstionType
+}
+
 // todo the return type should be Compressor, after finished Compressor we should modify it.
-func (s *SensorDescriptor) GetCompressor() (string) {
-	return "nocompress" //s.compressor
+func (s *SensorDescriptor) GetCompressor() (*compress.Encompress) {
+	return s.compressor
 }
 
 func (s *SensorDescriptor) Close() (bool) {
@@ -57,12 +65,14 @@ func (s *SensorDescriptor) Close() (bool) {
 
 
 func New(sId string, tdt int16, te int16) (*SensorDescriptor, error) {
-	// todo do measurement init and memory check
-
+	// todo init compressor
+	enCompressor := new(compress.Encompress)
 	return &SensorDescriptor{
 		sensorId:sId,
 		tsDataType:tdt,
 		tsEncoding:te,
+		compressor:enCompressor,
+		tsCompresstionType:header.UNCOMPRESSED,
 		timeCount:-1,
 		},nil
 }

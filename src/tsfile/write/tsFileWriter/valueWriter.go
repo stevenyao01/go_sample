@@ -67,7 +67,7 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 	case 1:
 		//int32
 		if data, ok := value.(int32); ok {
-			valueByteData = utils.Int32ToByte(data)
+			valueByteData = utils.Int32ToByteLittleEndian(data)
 		}
 	case 2:
 		//int64
@@ -101,7 +101,9 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 	timeByteData = utils.Int64ToByte(t)
 	encodeCount := s.desc.GetTimeCount()
 	if encodeCount == -1 {
-		s.timeBuf.Write(utils.BoolToByte(true))
+		aa := []byte{24}
+		s.timeBuf.Write(aa)
+		//s.timeBuf.Write(utils.BoolToByte(true))
 		s.timeBuf.Write(timeByteData)
 		s.timeBuf.Write(timeByteData)
 		s.timeBuf.Write(timeByteData)

@@ -70,7 +70,7 @@ const (
 
 	// Data compression method, TsFile supports UNCOMPRESSED or SNAPPY.
 	// Default value is UNCOMPRESSED which means no compression
-	compressor = "UNCOMPRESSED"
+	DefaultCompressor = "UNCOMPRESSED"
 
 	// Line count threshold for checking page memory occupied size
 	pageCheckSizeThreshold = 100

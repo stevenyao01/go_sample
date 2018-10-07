@@ -14,10 +14,11 @@ import (
 	"github.com/go_sample/src/tsfile/write/statistics"
 	"github.com/go_sample/src/tsfile/common/header"
 	"github.com/go_sample/src/tsfile/common/log"
+	"github.com/go_sample/src/tsfile/common/compress"
 )
 
 type PageWriter struct {
-	compressor 			string //Compressor
+	compressor 			*compress.Encompress
 	desc 				*sensorDescriptor.SensorDescriptor
 	// todo this buf should change to compert type
 	pageBuf 			*bytes.Buffer
@@ -29,7 +30,24 @@ type PageWriter struct {
 func (p *PageWriter) WritePageHeaderAndDataIntoBuff(dataBuffer *bytes.Buffer, valueCount int, sts statistics.Statistics, maxTimestamp int64, minTimestamp int64) (int) {
 	//this uncompressedSize should be calculate from timeBuf and valueBuf
 	uncompressedSize := dataBuffer.Len()
-	compressedSize := uncompressedSize
+
+	// write pageData to pageBuf
+	//声明一个空的slice,容量为dataBuffer的长度
+	dataSlice := make([]byte, dataBuffer.Len())
+	//把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
+	dataBuffer.Read(dataSlice)
+
+	var compressedSize int
+	var enc []byte
+	if p.desc.GetCompresstionType() == header.UNCOMPRESSED {
+		compressedSize = uncompressedSize
+	} else {
+		aSlice := make([]byte, 0)
+		enc = p.compressor.GetEncompressor(p.desc.GetCompresstionType()).Encompress(aSlice, dataSlice)
+		compressedSize = len(enc)
+	}
+
+
 	pageHeader, pageHeaderErr := header.NewPageHeader(int32(uncompressedSize), int32(compressedSize), int32(valueCount), sts, maxTimestamp, minTimestamp, p.desc.GetTsDataType())
 	if pageHeaderErr != nil {
 		log.Error("init pageHeader error: ", pageHeaderErr)
@@ -40,13 +58,17 @@ func (p *PageWriter) WritePageHeaderAndDataIntoBuff(dataBuffer *bytes.Buffer, va
 	log.Info("pageHeader: %v", pageHeader)
 	log.Info("finished to flush a page header into buffer, buf pos: %d", p.pageBuf.Len())
 
-	// write pageData to pageBuf
-	//声明一个空的slice,容量为timebuf的长度
-	timeSlice := make([]byte, dataBuffer.Len())
-	//把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
-	dataBuffer.Read(timeSlice)
+	//// write pageData to pageBuf
+	////声明一个空的slice,容量为dataBuffer的长度
+	//dataSlice := make([]byte, dataBuffer.Len())
+	////把buf的内容读入到timeSlice内,因为timeSlice容量为timeSize,所以只读了timeSize个过来
+	//dataBuffer.Read(dataSlice)
 	log.Info("start to flush a page data into buffer, buf pos: %d", p.pageBuf.Len())
-	p.pageBuf.Write(timeSlice)
+	if p.desc.GetCompresstionType() == header.UNCOMPRESSED {
+		p.pageBuf.Write(dataSlice)
+	} else {
+		p.pageBuf.Write(enc)
+	}
 	log.Info("finished to flush a page data into buffer, buf pos: %d", p.pageBuf.Len())
 	p.totalValueCount += int64(valueCount)
 	return 0

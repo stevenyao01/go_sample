@@ -5,9 +5,6 @@ import (
 	"github.com/go_sample/src/tsfile/common/utils"
 )
 
-const (
-	MQTT_CONF = "mqtt.conf"
-)
 
 // TsDataType
 const (

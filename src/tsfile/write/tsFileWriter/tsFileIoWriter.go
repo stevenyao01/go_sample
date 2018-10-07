@@ -86,8 +86,8 @@ func (t *TsFileIoWriter) EndFile (fs fileSchema.FileSchema) () {
 	}
 
 	for _, tsDeviceMetaData := range tsDeviceMetaDataMap {
-		startTime := int64(1) 	//int64(0x7fffffffffffffff)
-		endTime := int64(1)		//int64(0x8000000000000000)
+		startTime := int64(0x7fffffffffffffff)
+		endTime := int64(0x0000000000000000)
 		for _, rowGroup := range tsDeviceMetaData.GetRowGroups() {
 			for _, timeSeriesChunkMetaData := range rowGroup.GetTimeSeriesChunkMetaDataSli() {
 				startTime = min(startTime, timeSeriesChunkMetaData.GetStartTime())

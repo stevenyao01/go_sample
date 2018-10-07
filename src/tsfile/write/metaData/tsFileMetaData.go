@@ -65,11 +65,11 @@ func (t *TsFileMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 	byteLen += f1
 	if t.createBy == "" {
 		// write flag for t.createBy
-		f2, _ := buf.Write(utils.BoolToByte(true))
+		f2, _ := buf.Write(utils.BoolToByte(false))
 		byteLen += f2
 	} else {
 		// write flag for t.createBy
-		f3, _ := buf.Write(utils.BoolToByte(false))
+		f3, _ := buf.Write(utils.BoolToByte(true))
 		byteLen += f3
 		// write string t.createBy
 		f4, _ := buf.Write(utils.Int32ToByte(int32(len(t.createBy))))

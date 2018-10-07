@@ -61,7 +61,7 @@ func (t *TsDigest) serializeTo (buf *bytes.Buffer) (int) {
 			n4, _ := buf.Write([]byte(k))
 			byteLen += n4
 
-			n5, _ := buf.Write(utils.Int32ToByte(int32(v.Cap())))
+			n5, _ := buf.Write(utils.Int32ToByte(int32(v.Len())))
 			byteLen += n5
 
 			timeSlice := make([]byte, v.Len())
