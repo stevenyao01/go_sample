@@ -54,7 +54,7 @@ func (s *SensorDescriptor) GetCompresstionType() (int16) {
 	return s.tsCompresstionType
 }
 
-// todo the return type should be Compressor, after finished Compressor we should modify it.
+// the return type should be Compressor, after finished Compressor we should modify it.
 func (s *SensorDescriptor) GetCompressor() (*compress.Encompress) {
 	return s.compressor
 }
@@ -65,7 +65,7 @@ func (s *SensorDescriptor) Close() (bool) {
 
 
 func New(sId string, tdt int16, te int16) (*SensorDescriptor, error) {
-	// todo init compressor
+	// init compressor
 	enCompressor := new(compress.Encompress)
 	return &SensorDescriptor{
 		sensorId:sId,

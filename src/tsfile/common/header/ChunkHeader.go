@@ -55,7 +55,7 @@ type ChunkHeader struct {
 }
 
 func (c *ChunkHeader) ChunkHeaderToMemory(buffer *bytes.Buffer)(int32){
-	// todo write chunk header to buffer
+	// write chunk header to buffer
 	buffer.Write(utils.Int32ToByte(int32(len(c.sensorId))))
 	buffer.Write([]byte(c.sensorId))
 	buffer.Write(utils.Int32ToByte(int32(c.dataSize)))
@@ -80,7 +80,6 @@ func GetChunkSerializedSize (sensorId string) (int) {
 }
 
 func NewChunkHeader(sId string, pbs int, tdt int16, ct int16, et int16, nop int, mtt int64) (*ChunkHeader, error) {
-	// todo
 	ss := 3 * 4 + 3 * 2 + len(sId) + 8
 	return &ChunkHeader{
 		sensorId:sId,

@@ -49,7 +49,7 @@ func (t *TsFileIoWriter) GetPos () (int64) {
 }
 
 func (t *TsFileIoWriter) EndChunk (size int64, totalValueCount int64) () {
-	// todo set currentChunkMetaData
+	// set currentChunkMetaData
 	t.currentChunkMetaData.SetTotalByteSizeOfPagesOnDisk(size)
 	t.currentChunkMetaData.SetNumOfPoints(totalValueCount)
 	t.currentRowGroupMetaData.AddTimeSeriesChunkMetaData(t.currentChunkMetaData)
@@ -164,7 +164,7 @@ func (t *TsFileIoWriter) StartFlushChunk(sd *sensorDescriptor.SensorDescriptor, 
 	t.WriteBytesToFile(t.memBuf)
 	// truncate bytebuffer to empty
 	t.memBuf.Reset()
-	// todo set tsdigest
+	// set tsdigest
 	tsDigest, _ := metaData.NewTsDigest()
 	statisticsMap := make(map[string]bytes.Buffer)
 	//var max bytes.Buffer
@@ -214,7 +214,6 @@ func (t *TsFileIoWriter) WriteBytesToFile (buf *bytes.Buffer) () {
 }
 
 func NewTsFileIoWriter(file string) (*TsFileIoWriter, error) {
-	// todo
 	newFile, err := os.OpenFile(file, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		log.Info("open file:%s failed.", file)

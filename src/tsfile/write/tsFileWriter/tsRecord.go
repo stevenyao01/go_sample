@@ -105,8 +105,6 @@ func (t *TsRecord) GetDataPointSli() ([]*DataPoint) {
 
 
 func NewTsRecord (t time.Time, dId string) (*TsRecord, error) {
-	// todo
-
 	return &TsRecord{
 		time:t.Unix(),
 		deviceId:dId,

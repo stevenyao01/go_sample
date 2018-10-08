@@ -80,8 +80,6 @@ func (t *TimeSeriesChunkMetaData) SerializeTo (buf *bytes.Buffer) (int) {
 }
 
 func NewTimeSeriesChunkMetaData(sid string, fOffset int64, sTime int64, eTime int64) (*TimeSeriesChunkMetaData, error) {
-	// todo
-
 	return &TimeSeriesChunkMetaData{
 		sensorId:sid,
 		fileOffsetOfCorrespondingData:fOffset,

@@ -37,8 +37,6 @@ func (d *DataPoint) Write(t int64, sw *SeriesWriter) (bool) {
 
 
 //func New(sId string, tdt int, te int) (*DataPoint, error) {
-//	// todo do measurement init and memory check
-//
 //	return &DataPoint{
 //		sensorId:sId,
 //		tsDataType:tdt,

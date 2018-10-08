@@ -38,6 +38,16 @@ func Int64ToByte(num int64) []byte {
 	return buffer.Bytes()
 }
 
+func Int64ToByteLittleEndian(num int64) []byte {
+	var buffer bytes.Buffer
+	err := binary.Write(&buffer, binary.LittleEndian, num)
+	if err != nil {
+		log.Error("Int64ToByte error : %s", err)
+		return nil
+	}
+	return buffer.Bytes()
+}
+
 func Int32ToByte(num int32) []byte {
 	var buffer bytes.Buffer
 	err := binary.Write(&buffer, binary.BigEndian, num)

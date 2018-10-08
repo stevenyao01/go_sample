@@ -22,14 +22,14 @@ type RowGroupWriter struct {
 
 func (r *RowGroupWriter) AddSeriesWriter(sd *sensorDescriptor.SensorDescriptor, pageSize int) () {
 	if contain, _ := utils.MapContains(r.dataSeriesWriters, sd.GetSensorId()); !contain {
-		// todo new pagewrite
+		// new pagewriter
 		pw, _ := NewPageWriter(sd)
 
 		// new serieswrite
 		sw, _ := NewSeriesWriter(r.deviceId, sd, pw, pageSize)
 		r.dataSeriesWriters[sd.GetSensorId()] = sw
 	} else {
-		log.Error("given sensor has exist, need not add to series writer again.")
+		log.Info("given sensor has exist, need not add to series writer again.")
 	}
 	return
 }
@@ -53,7 +53,7 @@ func (r *RowGroupWriter) FlushToFileWriter (tsFileIoWriter *TsFileIoWriter) () {
 }
 
 func (r *RowGroupWriter) PreFlush()(){
-	// todo should flush current pages to mem.
+	// flush current pages to mem.
 	for _, v := range r.dataSeriesWriters {
 		v.PreFlush()
 	}
@@ -61,7 +61,7 @@ func (r *RowGroupWriter) PreFlush()(){
 }
 
 func (r *RowGroupWriter) GetCurrentRowGroupSize() (int) {
-	// todo get current size
+	// get current size
 	//size := int64(tfiw.rowGroupHeader.GetRowGroupSerializedSize())
 	rowGroupHeaderSize := header.GetRowGroupSerializedSize(r.deviceId)
 	size := rowGroupHeaderSize
@@ -90,8 +90,6 @@ func (r *RowGroupWriter) Close() (bool) {
 
 
 func NewRowGroupWriter(dId string) (*RowGroupWriter, error) {
-	// todo do measurement init and memory check
-
 	return &RowGroupWriter{
 		deviceId:dId,
 		dataSeriesWriters:make(map[string]*SeriesWriter),

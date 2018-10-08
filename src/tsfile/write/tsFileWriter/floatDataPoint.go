@@ -25,17 +25,7 @@ type FloatDataPoint struct {
 	value 				float32
 }
 
-//func (d *DataPoint) Write(v []byte) ([]byte,error) {
-//	return nil,nil
-//}
-//
-//func (d *DataPoint) Close() (bool) {
-//	return true
-//}
-
-
 func NewFloat(sId string, tdt int, val float32) (*DataPoint, error) {
-	// todo
 	return &DataPoint{
 		sensorId:sId,
 		tsDataType:tdt,

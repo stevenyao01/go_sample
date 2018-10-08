@@ -20,7 +20,6 @@ import (
 type PageWriter struct {
 	compressor 			*compress.Encompress
 	desc 				*sensorDescriptor.SensorDescriptor
-	// todo this buf should change to compert type
 	pageBuf 			*bytes.Buffer
 	totalValueCount		int64
 	maxTimestamp		int64
@@ -111,8 +110,6 @@ func (p *PageWriter) GetCurrentDataSize () (int) {
 
 
 func NewPageWriter(sd *sensorDescriptor.SensorDescriptor) (*PageWriter, error) {
-	// todo do measurement init and memory check
-
 	return &PageWriter{
 		desc:sd,
 		compressor:sd.GetCompressor(),

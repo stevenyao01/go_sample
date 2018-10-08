@@ -62,14 +62,15 @@ func (s *SeriesWriter) GetCurrentChunkSize (sId string) (int) {
 
 func (s *SeriesWriter) Write(t int64, value interface{}) (bool) {
 	s.time = t
+	//s.valueCount = s.valueCount + 1
+	s.valueWriter.Write(t, s.tsDataType, value, s.valueCount)
 	s.valueCount = s.valueCount + 1
-	s.valueWriter.Write(t, s.tsDataType, value)
-	// todo statistics ignore here, if necessary, Statistics.java
+	// statistics ignore here, if necessary, Statistics.java
 	s.pageStatistics.UpdateStats(s.tsDataType, value)
 	if s.minTimestamp == -1 {
 		s.minTimestamp = t
 	}
-	// todo check page size and write page data to buffer
+	// check page size and write page data to buffer
 	s.checkPageSizeAndMayOpenNewpage()
 	return true
 }
@@ -86,12 +87,12 @@ func (s *SeriesWriter) WriteToFileWriter (tsFileIoWriter *TsFileIoWriter) () {
 func (s *SeriesWriter)checkPageSizeAndMayOpenNewpage() () {
 	if s.valueCount == tsFileConf.MaxNumberOfPointsInPage {
 		log.Info("current line count reaches the upper bound, write page %s", s.sensorDescriptor)
-		// todo write data to buffer
+		// write data to buffer
 		s.WritePage()
 	} else if s.valueCount >= s.valueCountForNextSizeCheck {
 		currentColumnSize := s.valueWriter.GetCurrentMemSize()
 		if currentColumnSize > s.psThres {
-			// todo write data to buffer
+			// write data to buffer
 			s.WritePage()
 		} else {
 			log.Info("not enough size to write disk now.")
@@ -115,10 +116,9 @@ func (s *SeriesWriter) EstimateMaxSeriesMemSize () (int64) {
 
 func (s *SeriesWriter) WritePage()(){
 	s.pageWriter.WritePageHeaderAndDataIntoBuff(s.valueWriter.GetByteBuffer(), s.valueCount, s.pageStatistics, s.time, s.minTimestamp)
-	// todo pageStatistics
+	// pageStatistics
 	s.numOfPages += 1
 
-	//
 	s.minTimestamp = -1
 	s.valueCount = 0
 	s.valueWriter.Reset()
@@ -148,5 +148,6 @@ func NewSeriesWriter(dId string, d *sensorDescriptor.SensorDescriptor, pw *PageW
 		pageStatistics:*statistics.GetStatistics(d.GetTsDataType()),
 		valueWriter:*vw,
 		minTimestamp:-1,
+		valueCount:0,
 	},nil
 }

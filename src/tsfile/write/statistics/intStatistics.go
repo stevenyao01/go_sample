@@ -22,22 +22,8 @@ type IntStatistics struct {
 }
 
 func (i *IntStatistics)GetIntHeaderSize()(int){
-	return 5 * 4 + 8 *1
+	return 5 * 4 + 8 * 1
 }
-
-//func (d *BoolStatistics) GetStatistics(t int64, tdt int, value interface{}) (string) {
-//	return d.sensorId
-//}
-//
-//func (d *BoolStatistics) Write(t int64, sd seriesWriter.SeriesWriter) (bool) {
-//	if sd.GetTsDeviceId() == "" {
-//		log.Info("give seriesWriter is null, do nothing and return.")
-//		return false
-//	}
-//	sd.Write(t, d.value)
-//	return true
-//}
-
 
 func NewInt() (*Statistics, error) {
 

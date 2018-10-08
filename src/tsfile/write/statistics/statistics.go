@@ -60,7 +60,14 @@ func GetStatistics(tdt int16) (*Statistics) {
 		return newStatistics
 	case 2:
 		//int64
-
+		newStatistics, _ := NewFloat()
+		newStatistics.tsDataType = tdt
+		newStatistics.max = int64(0)
+		newStatistics.min = int64(0)
+		newStatistics.sum = int64(0)
+		newStatistics.first = int64(0)
+		newStatistics.last = int64(0)
+		return newStatistics
 	case 3:
 		//float
 		newStatistics, _ := NewFloat()
@@ -73,6 +80,14 @@ func GetStatistics(tdt int16) (*Statistics) {
 		return newStatistics
 	case 4:
 		//double , float64 in golang as double in c
+		newStatistics, _ := NewFloat()
+		newStatistics.tsDataType = tdt
+		newStatistics.max = int64(0)
+		newStatistics.min = int64(0)
+		newStatistics.sum = int64(0)
+		newStatistics.first = int64(0)
+		newStatistics.last = int64(0)
+		return newStatistics
 	case 5:
 		//text
 	case 6:
@@ -94,18 +109,19 @@ func (s *Statistics)GetHeaderSize(tdt int16)(int){
 	switch tdt {
 	case 0:
 		// bool
-		return 5 * 1 + 8 * 1
+		return 4 * 1 + 8 * 1
 	case 1:
 		//int32
-		return 5 * 4 + 8 *1
+		return 4 * 4 + 8 *1
 	case 2:
 		//int64
-
+		return 5 * 8
 	case 3:
 		//float
-		return 8 * 6
+		return 5 * 8
 	case 4:
 		//double , float64 in golang as double in c
+		return 5 * 8
 	case 5:
 		//text
 	case 6:
@@ -116,7 +132,7 @@ func (s *Statistics)GetHeaderSize(tdt int16)(int){
 		//bigdecimal
 	default:
 		// int32
-		return 5 * 4 + 8 *1
+		return 4 * 4 + 8 *1
 	}
 	return 0
 }
@@ -137,6 +153,7 @@ func (s *Statistics)GetMaxByte(tdt int16)([]byte){
 		return utils.Float32ToByte(s.max.(float32))
 	case 4:
 		//double , float64 in golang as double in c
+		return utils.Int64ToByte(s.max.(int64))
 	case 5:
 		//text
 	case 6:
@@ -168,6 +185,7 @@ func (s *Statistics)GetMinByte(tdt int16)([]byte){
 		return utils.Float32ToByte(s.min.(float32))
 	case 4:
 		//double , float64 in golang as double in c
+		return utils.Int64ToByte(s.min.(int64))
 	case 5:
 		//text
 	case 6:
@@ -199,6 +217,7 @@ func (s *Statistics)GetFirstByte(tdt int16)([]byte){
 		return utils.Float32ToByte(s.first.(float32))
 	case 4:
 		//double , float64 in golang as double in c
+		return utils.Int64ToByte(s.first.(int64))
 	case 5:
 		//text
 	case 6:
@@ -230,6 +249,7 @@ func (s *Statistics)GetLastByte(tdt int16)([]byte){
 		return utils.Float32ToByte(s.last.(float32))
 	case 4:
 		//double , float64 in golang as double in c
+		return utils.Int64ToByte(s.last.(int64))
 	case 5:
 		//text
 	case 6:
@@ -412,8 +432,6 @@ func (s *Statistics) UpdateStats (tdt int16, value interface{}) () {
 
 
 //func New(sId string, tdt int, te int) (*DataPoint, error) {
-//	// todo do measurement init and memory check
-//
 //	return &DataPoint{
 //		sensorId:sId,
 //		tsDataType:tdt,

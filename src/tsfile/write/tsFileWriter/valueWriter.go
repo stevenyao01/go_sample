@@ -22,7 +22,7 @@ type ValueWriter struct {
 	//// value
 	//valueEncoder 	Encoder
 
-	// todo these buffer should be encoding
+	// these buffer should be encoding
 	timeBuf 			*bytes.Buffer
 	valueBuf 			*bytes.Buffer
 	desc	 			*sensorDescriptor.SensorDescriptor
@@ -55,7 +55,7 @@ func (s *ValueWriter) GetByteBuffer()(*bytes.Buffer){
 	return encodeBuffer
 }
 
-func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
+func (s *ValueWriter) Write(t int64, tdt int16, value interface{}, valueCount int) () {
 	var timeByteData []byte
 	var valueByteData []byte
 	switch tdt {
@@ -98,16 +98,16 @@ func (s *ValueWriter) Write(t int64, tdt int16, value interface{}) () {
 		// int32
 	}
 	// write time to byteBuffer
-	timeByteData = utils.Int64ToByte(t)
-	encodeCount := s.desc.GetTimeCount()
-	if encodeCount == -1 {
+	timeByteData = utils.Int64ToByteLittleEndian(t)
+	//encodeCount := s.desc.GetTimeCount()
+	if valueCount == 0 {
 		aa := []byte{24}
 		s.timeBuf.Write(aa)
 		//s.timeBuf.Write(utils.BoolToByte(true))
 		s.timeBuf.Write(timeByteData)
 		s.timeBuf.Write(timeByteData)
 		s.timeBuf.Write(timeByteData)
-		s.desc.SetTimeCount(encodeCount + 1)
+		//s.desc.SetTimeCount(encodeCount + 1)
 	}
 	if s.desc.GetTimeCount() == tsFileConf.DeltaBlockSize {
 		s.timeBuf.Write(timeByteData)
@@ -127,16 +127,6 @@ func (s *ValueWriter) Reset() () {
 	s.valueBuf.Reset()
 	return
 }
-
-//// todo the return type should be Compressor, after finished Compressor we should modify it.
-//func (s *ValueWriter) GetCompressor() (string) {
-//	return s.compressor
-//}
-//
-//func (s *ValueWriter) Close() (bool) {
-//	return true
-//}
-
 
 func NewValueWriter(d *sensorDescriptor.SensorDescriptor) (*ValueWriter, error) {
 

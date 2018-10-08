@@ -21,12 +21,12 @@ type TsDigest struct {
 
 func (t *TsDigest) SetStatistics (statistics map[string]bytes.Buffer) () {
 	t.statistics = statistics
-	// todo recalculate serialized size
+	// recalculate serialized size
 	t.ReCalculateSerializedSize()
 }
 
 func (t *TsDigest) ReCalculateSerializedSize () () {
-	//todo calculate size again
+	//calculate size again
 	t.serializedSize = 4
 	if t.statistics != nil {
 		for k, v := range t.statistics {

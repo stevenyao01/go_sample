@@ -11,22 +11,13 @@ import (
  * @Description:
  */
 
-type IntDataPoint struct {
+type LongDataPoint struct {
 	sensorId			string
 	tsDataType			int16
-	value 				int32
+	value 				int64
 }
 
-//func (d *DataPoint) Write(v []byte) ([]byte,error) {
-//	return nil,nil
-//}
-//
-//func (d *DataPoint) Close() (bool) {
-//	return true
-//}
-
-
-func NewInt(sId string, tdt int, val int32) (*DataPoint, error) {
+func NewLong(sId string, tdt int, val int64) (*DataPoint, error) {
 	return &DataPoint{
 		sensorId:sId,
 		tsDataType:tdt,

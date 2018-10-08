@@ -59,8 +59,6 @@ func (f *FileSchema) Registermeasurement (sd *sensorDescriptor.SensorDescriptor)
 
 
 func New() (*FileSchema, error) {
-	// todo do measurement init and memory check
-
 	return &FileSchema{
 		sensorDescriptorMap:make(map[string]*sensorDescriptor.SensorDescriptor),
 		additionalProperties:make(map[string]string),

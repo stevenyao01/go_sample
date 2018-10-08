@@ -13,7 +13,7 @@ type RowGroupHeader struct {
 }
 
 func (r *RowGroupHeader) RowGroupHeaderToMemory (buffer *bytes.Buffer) (int32) {
-	// todo write header to buffer
+	// write header to buffer
 	buffer.Write(utils.Int32ToByte(int32(len(r.deviceId))))
 	buffer.Write([]byte(r.deviceId))
 	buffer.Write(utils.Int64ToByte(r.dataSize))
@@ -27,7 +27,6 @@ func GetRowGroupSerializedSize (deviceId string) (int) {
 }
 
 func NewRowGroupHeader(dId string, rgs int64, sn int32) (*RowGroupHeader, error) {
-	// todo
 	ss := 1 * 4 + 1 * 8 + len(dId) + 1 * 4
 	return &RowGroupHeader{
 		deviceId:dId,

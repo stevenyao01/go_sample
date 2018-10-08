@@ -43,7 +43,7 @@ func (t *TsFileWriter) AddSensor(sd *sensorDescriptor.SensorDescriptor) ([]byte)
 	//}
 	t.rowGroupSizeThreshold = t.primaryRowGroupSize - int64(t.oneRowMaxSize)
 
-	// todo flush rowgroup
+	// flush rowgroup
 	t.checkMemorySizeAndMayFlushGroup()
  	return nil
 }
@@ -71,7 +71,7 @@ func (t *TsFileWriter) AddSensor(sd *sensorDescriptor.SensorDescriptor) ([]byte)
    * 		 false - otherwise. But this function just return false, the Override of IoTDB may return true.
    */
 func (t *TsFileWriter)flushAllRowGroups(isFillRowGroup bool)(bool){
-	// todo flush data to disk
+	// flush data to disk
 	if t.recordCount > 0 {
 		totalMemStart := t.tsFileIoWriter.GetPos()
 		if t.recordCount > 0 {
@@ -105,7 +105,7 @@ func (t *TsFileWriter) reset () () {
 
 func (t *TsFileWriter) Write(tr TsRecord) (bool) {
 	log.Info("tsFileWriter->Write()")
-	// todo write data here
+	// write data here
 	if t.checkIsDeviceExist(tr, *t.schema) {
 		//var r RowGroupWriter;
 		gd := t.groupDevices[tr.GetDeviceId()]
@@ -154,7 +154,7 @@ func (t *TsFileWriter)checkMemorySizeAndMayFlushGroup() (bool) {
 }
 
 func (t *TsFileWriter) CalculateMemSizeForAllGroup()(int64){
-	// todo calculate all group memory size
+	// calculate all group memory size
 	var memTotalSize int64 = 0
 	for _, v := range t.groupDevices {
 		memTotalSize += v.UpdateMaxGroupMemSize()

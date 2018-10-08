@@ -79,13 +79,6 @@ func (r *RowGroupMetaData) GetserializedSize () (int) {
 }
 
 func (r *RowGroupMetaData) RecalculateSerializedSize () () {
-	//defer func() {     //必须要先声明defer，否则不能捕获到panic异常
-	//	fmt.Println("c")
-	//	if err := recover(); err != nil {
-	//		fmt.Println(err)    //这里的err其实就是panic传入的内容，55
-	//	}
-	//	fmt.Println("d")
-	//}()
 	r.serializedSize = 1 *4 + len(r.deviceId) + 2 * 8 + 1 * 4
 	for _, v := range r.TimeSeriesChunkMetaDataSli {
 		if &v != nil {
@@ -98,8 +91,6 @@ func (r *RowGroupMetaData) RecalculateSerializedSize () () {
 }
 
 func NewRowGroupMetaData(dId string, tbs int64, foocd int64, tscmds []*TimeSeriesChunkMetaData) (*RowGroupMetaData, error) {
-	// todo
-
 	return &RowGroupMetaData{
 		deviceId:dId,
 		totalByteSize:tbs,
