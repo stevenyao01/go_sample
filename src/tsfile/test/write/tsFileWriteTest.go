@@ -110,7 +110,7 @@ func main(){
 	log.Info("init tsRecord device_2.")
 
 	ts3 := time.Now()
-	tr2, trErr2 := tsFileWriter.NewTsRecord(ts3, "device_2")
+	tr2, trErr2 := tsFileWriter.NewTsRecord(ts3, "lidong_2")
 	if trErr2 != nil {
 		log.Info("init tsRecord error.")
 	}

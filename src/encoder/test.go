@@ -1,9 +1,9 @@
-package main1
+package main
 
 import (
+	"github.com/go_sample/src/encoder/encoder"
+	"github.com/go_sample/src/tsfile/common/header"
 	"bytes"
-	"fmt"
-	"github.com/go_sample/src/tsfile/common/encoder"
 )
 
 /**
@@ -15,10 +15,18 @@ import (
  */
 
  func main () () {
-	//buf := bytes.NewBuffer([]byte{})
- 	//enc := Encoder().Encode(1, buf)
- 	//enc, _ := enc.
- 	//tt := enc.
- 	//tt := enc.eo.Encode(1, buf)
- 	//fmt.Println("tt: %s", tt)
+	 buf := bytes.NewBuffer([]byte{})
+
+	 // encode int
+	 var iValue int32
+	 iValue = 1
+	 en1 := encoder.GetEncoder(header.PLAIN, header.INT32)
+	 en1.Encode(iValue, buf)
+
+	// encode float
+	 var fValue float32
+	 fValue = 1.2
+	 en2 := encoder.GetEncoder(header.PLAIN, header.FLOAT)
+	 en2.Encode(fValue, buf)
+
  }
