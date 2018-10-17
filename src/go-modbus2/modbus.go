@@ -262,7 +262,7 @@ func getDiscreteInputs() []string {
 	return myS1
 }
 
-func main() {
+func main1() {
 
 	initTest()
 

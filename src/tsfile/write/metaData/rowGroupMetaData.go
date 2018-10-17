@@ -9,14 +9,13 @@ package metaData
  */
 
 import (
-	"os"
 	"github.com/go_sample/src/tsfile/common/log"
 	"bytes"
 	"github.com/go_sample/src/tsfile/common/utils"
 )
 
 type RowGroupMetaData struct {
-	tsIoFile 						*os.File
+	//tsIoFile 						*os.File
 	deviceId						string
 	totalByteSize					int64
 	fileOffsetOfCorrespondingData	int64
@@ -26,6 +25,9 @@ type RowGroupMetaData struct {
 }
 
 func (r *RowGroupMetaData) AddTimeSeriesChunkMetaData (md *TimeSeriesChunkMetaData) () {
+	if len(r.TimeSeriesChunkMetaDataSli) == 0 {
+		r.TimeSeriesChunkMetaDataSli = make([]*TimeSeriesChunkMetaData, 0)
+	}
 	r.TimeSeriesChunkMetaDataSli = append(r.TimeSeriesChunkMetaDataSli, md)
 	r.serializedSize += md.GetSerializedSize()
 	r.sizeOfChunkSli += 1

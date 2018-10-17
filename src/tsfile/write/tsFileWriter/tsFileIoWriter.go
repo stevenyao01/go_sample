@@ -200,7 +200,7 @@ func (t *TsFileIoWriter) StartFlushChunk(sd *sensorDescriptor.SensorDescriptor, 
 	statisticsMap[MAXVALUE] = max
 
 	tsDigest.SetStatistics(statisticsMap)
-	t.currentChunkMetaData.SetDigest(*tsDigest)
+	t.currentChunkMetaData.SetDigest(tsDigest)
 	return header.GetChunkSerializedSize(sd.GetSensorId())
 }
 

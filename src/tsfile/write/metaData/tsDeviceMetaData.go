@@ -14,8 +14,8 @@ import (
 )
 
 type TsDeviceMetaData struct {
-	sensorId							string
-	tsDataType							int16
+	//sensorId							string
+	//tsDataType							int16
 	rowGroupmetaDataSli					[]*RowGroupMetaData
 	sizeOfRowGroupMetaDataSli			int
 	serializedSize						int

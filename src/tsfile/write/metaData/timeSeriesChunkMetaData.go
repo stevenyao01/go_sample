@@ -18,7 +18,7 @@ type TimeSeriesChunkMetaData struct {
 	fileOffsetOfCorrespondingData		int64
 	startTime							int64
 	endTime								int64
-	valueStatistics						TsDigest
+	valueStatistics						*TsDigest
 	totalByteSizeOfPagesOnDisk			int64
 	numOfPoints							int64
 }
@@ -30,7 +30,7 @@ func (t *TimeSeriesChunkMetaData) GetSerializedSize () (int) {
 	return 1 * 4 + len(t.sensorId) + 5 * 8 + t.valueStatistics.GetSerializedSize()
 }
 
-func (t *TimeSeriesChunkMetaData) SetDigest (tsDigest TsDigest) () {
+func (t *TimeSeriesChunkMetaData) SetDigest (tsDigest *TsDigest) () {
 	t.valueStatistics = tsDigest
 }
 
