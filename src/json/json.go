@@ -4,9 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
+	"github.com/go_sample/src/tsfile/common/log"
 )
 
-func main() {
+type request struct {
+	Company_id              int             `json:"company_id"`
+	Company_sk              string          `json:"company_sk"`
+	Device_id              	string          `json:"device_id"`
+	Device_desc             string          `json:"device_desc"`
+}
+
+func main(){
+	request1 := request{100000, "1234567890qwertyuiop", "8888", "223.203.201.251:8200"}
+	data, _ := json.Marshal(request1)
+	log.Info("data: %s", string(data))
+	request2 := request{100, "1234567890qwertyuiop", "8888", "223.203.201.251:8200"}
+	json.Unmarshal(data, &request2)
+}
+
+func main1() {
 	//拼凑json   body为map数组
 	var rbody []map[string]interface{}
 	t := make(map[string]interface{})
