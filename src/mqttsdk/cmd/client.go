@@ -203,7 +203,7 @@ func NewTLSConfig() *tls.Config {
 	}
 	fmt.Println("0. resd pemCerts Success")
 
-	// Import client certificate/key pair
+	//Import client certificate/key pair
 	cert, err := tls.LoadX509KeyPair("samplecerts/client-crt.pem", "samplecerts/client-key.pem")
 	if err != nil {
 		panic(err)
