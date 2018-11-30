@@ -10,7 +10,6 @@ package sdk
 
 import (
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/workerSDK/workerr"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -27,6 +26,7 @@ import (
 )
 
 const timeOut = 30
+var timeout = errors.New("mqtt timeout")
 
 type CbReceive func(sender_device_id string, channel string, msg mqtt.Message) ()
 type CbBroadCast func(topic string, msg mqtt.Message) ()
@@ -92,60 +92,61 @@ type Client interface {
 var ctx log.Interface
 
 func (m *Mqtt) Init(sdkParams SdkParams) (bool) {
-	m.doInit(sdkParams)
-	return true
+	return m.doInit(sdkParams)
 }
 
 func (m *Mqtt) Uninit() (bool) {
-	if (!m.mqttClient.IsConnected()) {
-		fmt.Println("mqtt is disconnected\n")
-		return false;
+	if !m.mqttClient.IsConnected() {
+		fmt.Println("mqtt is disconnected")
+		return false
 	}
 	m.mqttClient.Disconnect(100)
 	return true
 }
 
-func (m *Mqtt) SendMessage(receive_device_id string, qos int, channel string, data []byte) (bool) {
-	if (data == nil) {
+func (m *Mqtt) SendMessage(receive_device_id string, qos int, channel string, data []byte) (n int, err error) {
+	if data == nil {
 		fmt.Println("message is empty")
-		return false;
+		return 0, errors.New("message is empty")
 	}
 
-	m.checkConnect()
+	//m.checkConnect()
 
-	var result = false
 	var publish_client_id = m.mqttParams.clientId
-	if (publish_client_id == "") {
-		fmt.Println("publish_device_id is nil\n")
-		return false
+	if publish_client_id == "" {
+		fmt.Println("publish_device_id is nil")
+		return 0, errors.New("publish_device_id is nil")
 	}
 
 	var topic = fmt.Sprintf("$LEAP/%d/%s/message/%s/%s", m.mqttParams.companyId, receive_device_id, m.mqttParams.deviceId, m.encodeTopic(channel))
-	if (!m.validTopic(topic)) {
-		fmt.Println("receiver_uuid is invalid\n")
-		return false
+	if !m.validTopic(topic) {
+		fmt.Println("receiver_uuid is invalid")
+		return 0, errors.New("receiver_uuid is invalid")
 	}
 	fmt.Println("sendtopic == " + topic)
 	fmt.Println("sendData == " + string(data))
-	token := m.mqttClient.Publish(topic, 0, false, string(data))
-	token.WaitTimeout(timeOut * time.Second)
-	result = true
-	return result
+	token := m.mqttClient.Publish(topic, 2, false, string(data))
+	if !token.WaitTimeout(timeOut * time.Second) {
+		return 0,timeout
+	}
+
+	return len(data), token.Error()
 }
 
-func (m *Mqtt) ReceiveMessage(sender_device_id string, qos int, channel string, callback CbReceive) (bool) {
-	m.checkConnect()
+func (m *Mqtt) ReceiveMessage(sender_device_id string, qos int, channel string, callback CbReceive) error {
+	//m.checkConnect()
 
 	var publish_client_id = m.mqttParams.clientId
-	if (publish_client_id == "") {
+	if publish_client_id == "" {
 		fmt.Println("publish_device_id is nil\n")
-		return false
+		return errors.New("publish_device_id is nil")
 	}
 
 	var topic = fmt.Sprintf("$LEAP/%d/%s/message/%s/%s", m.mqttParams.companyId, sender_device_id, m.mqttParams.deviceId, m.encodeTopic(channel))
-	if (!m.validTopic(topic)) {
+	if !m.validTopic(topic) {
 		fmt.Println("receive topic is invalid")
-		return false;
+		return errors.New("receive topic is invalid")
+		//return false;
 	}
 	fmt.Println("receive topic == " + topic)
 	if _, ok := m.mqttParams.mqttSubReceiveMap[topic]; !ok {
@@ -154,43 +155,50 @@ func (m *Mqtt) ReceiveMessage(sender_device_id string, qos int, channel string, 
 	}
 
 	token := m.mqttClient.Subscribe(topic, byte(qos), m.CbReceive)
-	token.WaitTimeout(timeOut * time.Second)
-	if token.Error() != nil {
-		return false
+	if !token.WaitTimeout(timeOut * time.Second) {
+		return timeout
 	}
 
-	return true
+	return token.Error()
 }
 
-func (m *Mqtt) Broadcast(topic string, data []byte) (bool) {
-	if (data == nil) {
+func (m *Mqtt) Broadcast(topic string, data []byte) (n int, err error) {
+	if data == nil {
 		fmt.Println("message is empty")
-		return false;
+		return 0, errors.New("message is empty")
 	}
 
-	m.checkConnect()
-
-	var result = false
-	if (!m.validTopic(topic)) {
-		fmt.Println("receiver_uuid is invalid\n")
-		return false
-	}
-	fmt.Println("broadcast topic == " + topic)
-	fmt.Println("broadcast Data == " + string(data))
-	token := m.mqttClient.Publish(topic, 0, false, string(data))
-	token.WaitTimeout(timeOut * time.Second)
-	result = true
-	return result
-}
-
-func (m *Mqtt) ReceiveBroadcast(topic string, callback CbBroadCast) (bool) {
-	m.checkConnect()
+	//m.checkConnect()
 
 	var publish_client_id = m.mqttParams.clientId
-	if (publish_client_id == "") {
-		fmt.Println("publish_device_id is nil\n")
-		return false
+	if publish_client_id == "" {
+		fmt.Println("publish_device_id is nil")
+		return 0, errors.New("publish_device_id is nil")
 	}
+
+	//fmt.Println("broadcast topic == " + topic)
+	token := m.mqttClient.Publish(topic, 1, false, string(data))
+	if !token.WaitTimeout(timeOut * time.Second) {
+		log.Error("publish timeout.")
+		return 0, timeout
+	}
+	if token.Error() != nil {
+		fmt.Println("publish error!")
+	}//else{
+	//	fmt.Println("broadcast Data == " + string(data))
+	//}
+
+	return len(data), token.Error()
+}
+
+func (m *Mqtt) ReceiveBroadcast(topic string, callback CbBroadCast) error {
+	//m.checkConnect()
+
+	//var publish_client_id = m.mqttParams.clientId
+	//if publish_client_id == "" {
+	//	fmt.Println("publish_device_id is nil\n")
+	//	return errors.New("publish_device_id is nil")
+	//}
 
 	fmt.Println("receive broadcast topic == " + topic)
 	if _, ok := m.mqttParams.mqttSubBroadCastMap[topic]; !ok {
@@ -199,12 +207,13 @@ func (m *Mqtt) ReceiveBroadcast(topic string, callback CbBroadCast) (bool) {
 	}
 
 	token := m.mqttClient.Subscribe(topic, 0, m.CbBroadCast)
-	token.WaitTimeout(timeOut * time.Second)
-	if token.Error() != nil {
-		return false
+	if !token.WaitTimeout(timeOut * time.Second) {
+		return timeout
 	}
-
-	return true
+	if token.Error() != nil {
+		fmt.Println("subscribe error: ", token.Error().Error())
+	}
+	return token.Error()
 }
 
 func (m *Mqtt) CbReceive(client mqtt.Client, msg mqtt.Message) {
@@ -217,7 +226,8 @@ func (m *Mqtt) CbReceive(client mqtt.Client, msg mqtt.Message) {
 }
 
 func (m *Mqtt) CbBroadCast(client mqtt.Client, msg mqtt.Message) {
-	fmt.Println("receive msg in callback: ", string(msg.Payload()))
+	//fmt.Println("receive msg in callback: ", string(msg.Payload()))
+	//fmt.Println("topic:", msg.Topic())
 	m.mqttParams.mqttSubBroadCastMap[msg.Topic()].callbackBroadCast(msg.Topic(), msg)
 }
 
@@ -227,7 +237,7 @@ var callBack mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) ()
 }
 
 func (m *Mqtt) UnReceive(sender_device_id string, channel string) (bool) {
-	m.checkConnect()
+	//m.checkConnect()
 
 	var topic = fmt.Sprintf("$LEAP/%d/%s/message/%s/%s", m.mqttParams.companyId, sender_device_id, m.mqttParams.deviceId, m.encodeTopic(channel))
 	if (!m.validTopic(topic)) {
@@ -257,47 +267,47 @@ func (m *Mqtt) decodeTopic(channel string) (string) {
 	return ""
 }
 
-func (m *Mqtt) checkConnect() () {
-	for !m.mqttClient.IsConnected() {
-		err := m.reConnect()
-		if err != nil {
-			fmt.Println("mqtt connect is disconnected, retry now!")
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		fmt.Println("mqtt connect is resumed.")
-		break
-	}
-}
+//func (m *Mqtt) checkConnect() () {
+//	for !m.mqttClient.IsConnected() {
+//		err := m.reConnect()
+//		if err != nil {
+//			fmt.Println("mqtt connect is disconnected, retry now!")
+//			time.Sleep(1 * time.Second)
+//			continue
+//		}
+//		fmt.Println("mqtt connect is resumed.")
+//		break
+//	}
+//}
+//
+//func (m *Mqtt) reConnect() (error) {
+//	if m.mqttClient != nil {
+//		token := m.mqttClient.Connect()
+//		token.WaitTimeout(timeOut * time.Second)
+//		if token.Error() != nil {
+//			fmt.Printf("Could not reConnect to MQTT\n")
+//			return token.Error()
+//		} else {
+//			fmt.Printf("Success reConnect to MQTT\n")
+//			if m.mqttClient.IsConnected() {
+//				if len(m.mqttParams.mqttSubReceiveMap) > 0 {
+//					for _, v := range m.mqttParams.mqttSubReceiveMap {
+//						m.mqttClient.Subscribe(v.topic, v.qos, m.CbReceive)
+//					}
+//				}
+//				if len(m.mqttParams.mqttSubBroadCastMap) > 0 {
+//					for _, v := range m.mqttParams.mqttSubBroadCastMap {
+//						m.mqttClient.Subscribe(v.topic, v.qos, m.CbBroadCast)
+//					}
+//				}
+//			}
+//			return nil
+//		}
+//	}
+//	return errors.New("mqttClient is nil!")
+//}
 
-func (m *Mqtt) reConnect() (error) {
-	if m.mqttClient != nil {
-		token := m.mqttClient.Connect()
-		token.WaitTimeout(timeOut * time.Second)
-		if token.Error() != nil {
-			fmt.Printf("Could not reConnect to MQTT\n")
-			return token.Error()
-		} else {
-			fmt.Printf("Success reConnect to MQTT\n")
-			if m.mqttClient.IsConnected() {
-				if len(m.mqttParams.mqttSubReceiveMap) > 0 {
-					for _, v := range m.mqttParams.mqttSubReceiveMap {
-						m.mqttClient.Subscribe(v.topic, v.qos, m.CbReceive)
-					}
-				}
-				if len(m.mqttParams.mqttSubBroadCastMap) > 0 {
-					for _, v := range m.mqttParams.mqttSubBroadCastMap {
-						m.mqttClient.Subscribe(v.topic, v.qos, m.CbBroadCast)
-					}
-				}
-			}
-			return nil
-		}
-	}
-	return errors.New("mqttClient is nil!")
-}
-
-func (m *Mqtt) register(sdkParams SdkParams) (*MqReponse, error, int) {
+func (m *Mqtt) register(sdkParams SdkParams) (*MqReponse, error) {
 	companySk := m.readFile(sdkParams.device_sk)
 	tmpRequest, _ := NewMqRequest(companySk, sdkParams.device_id)
 	m.mqttRequest = *tmpRequest
@@ -312,29 +322,29 @@ func (m *Mqtt) register(sdkParams SdkParams) (*MqReponse, error, int) {
 	reqest.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		log.Debug("req err == " + err.Error())
-		return nil, err, workerr.WORKER_REQUEST_ERROR.Code()
+		return nil, err
 	}
 	response, err := client.Do(reqest)
 	if err != nil {
 		log.Error("request server error, hostname: " + sdkParams.server + "post-json: " + string(data))
-		return nil, err, workerr.WORKER_REQUEST_ERROR.Code()
+		return nil, err
 	}
 	defer response.Body.Close()
 
 	status := response.StatusCode
 	if (status != 200) {
-		return nil, errors.New(fmt.Sprintf("http code == %d", status)), workerr.WORKER_RESPOND_ERROR.Code()
+		return nil, errors.New(fmt.Sprintf("http code == %d", status))
 	}
 	body, _ := ioutil.ReadAll(response.Body)
 
-	fmt.Println("http response == " + string(body)) //, _ := ioutil.ReadAll(resp.Body))
+	log.Debug("http response == " + string(body)) //, _ := ioutil.ReadAll(resp.Body))
 	tmpResponse, _ := NewMqResponse()
 
 	err11 := json.Unmarshal(body, &tmpResponse)
 	if err11 != nil {
 		log.Debug("err11: " + err11.Error())
 	}
-	return tmpResponse, nil, workerr.WORKER_SUCCESS_EXIT.Code()
+	return tmpResponse, nil
 }
 
 func (m *Mqtt) NewClient(ctx log.Interface, username, password string, brokers ...string) mqtt.Client {
@@ -354,21 +364,50 @@ func (m *Mqtt) NewClient(ctx log.Interface, username, password string, brokers .
 	mqttOpts.SetKeepAlive(30 * time.Second)
 	mqttOpts.SetPingTimeout(10 * time.Second)
 
+	mqttOpts.SetAutoReconnect(true)
 	// Usually this setting should not be used together with random ClientIDs, but
 	// we configured The Things Network's MQTT servers to handle this correctly.
-	mqttOpts.SetCleanSession(false)
+	mqttOpts.SetCleanSession(true)
 
 	mqttOpts.SetDefaultPublishHandler(func(client mqtt.Client, msg mqtt.Message) {
-		ctx.WithField("message", msg).Warn("Received unhandled message")
+		//ctx.WithField("message", msg).Warn("Received unhandled message")
+		fmt.Println("message: ", msg)
 	})
+	mqttOpts.SetMaxReconnectInterval(100*time.Millisecond)
 
 	mqttOpts.SetConnectionLostHandler(func(client mqtt.Client, err error) {
+		fmt.Println("connect lost.")
 		////ctx.WithError(err).Warn("Disconnected, reconnecting...")
 		//fmt.Println("Disconnected, reconnecting.....")
+		//for true {
+		//	m.mqttClient.Disconnect(0)
+		//	token := m.mqttClient.Connect()
+		//	if !token.WaitTimeout(timeOut) {
+		//		fmt.Println("reConnect timeout")
+		//		continue
+		//	}
+		//
+		//	if token.Error() != nil {
+		//		fmt.Println("reConnect failed: ", token.Error().Error())
+		//		continue
+		//	}
+		//	fmt.Println("reConnect ok!")
+		//	break
+		//}
 	})
 
 	mqttOpts.SetOnConnectHandler(func(client mqtt.Client) {
-		ctx.Debug("Connected")
+		fmt.Println("Connected")
+		for true {
+			token := m.mqttClient.Subscribe("$LEAP/localid", 0, m.CbBroadCast)
+			token.WaitTimeout(timeOut)
+			if token.Error() != nil {
+				fmt.Println("reSubscribe failed")
+				continue
+			}
+			fmt.Println("reSubscribe ok!")
+			break
+		}
 	})
 
 	mqttOpts.SetTLSConfig(tlsconfig)
@@ -446,8 +485,8 @@ func (m *Mqtt) newTLSConfigDouble() *tls.Config {
 
 func (m *Mqtt) doInit(sdkParams SdkParams) (bool) {
 	for {
-		response, err, _ := m.register(sdkParams)
-		if (err != nil) {
+		response, err := m.register(sdkParams)
+		if err != nil {
 			log.Error("register error: " + err.Error())
 			time.Sleep(1 * time.Second)
 			//continue
