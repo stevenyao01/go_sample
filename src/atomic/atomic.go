@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sync/atomic"
+	"runtime"
+	"syscall"
 )
 
 /**
@@ -15,6 +17,7 @@ import (
 
 func main() {
 	var Atomicvalue  atomic.Value
+	syscall.Dup2()
 	Atomicvalue.Store([]int{1,2,3,4,5})
 	anotherStore(&Atomicvalue)
 	fmt.Println("main: ",Atomicvalue)
