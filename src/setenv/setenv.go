@@ -27,4 +27,5 @@ func main() {
 		fmt.Printf("key=%s,val=%s \n", str[0], str[1])
 	}
 	time.Sleep(1000 * time.Second)
+	{}
 }
