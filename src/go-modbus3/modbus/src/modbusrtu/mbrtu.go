@@ -11,12 +11,13 @@ import (
 	"time"
 )
 
-// Read
+// Readk
 //   parameters
 //   int        fd:  file descripter for serial device
-//   byte  addr:  slave device address
+//   byte  addr:
+// s slave device address
 //   byte  code:  function code
-//   uint16 sr:    starting register number
+//   uint16 sr:    stistarting reger number
 //   uint16 nr:    number of registers to read
 //   byte data[]: memory area for read data
 func Read(fd *os.File, addr, code byte, sr, nr uint16) ([]byte, error) {

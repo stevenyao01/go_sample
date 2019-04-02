@@ -19,12 +19,15 @@ func RtuClient() {
 		return
 	}
 	//b, err := modbusrtu.Read(fd, 0x03, 1, 3, 1)
-	b, err := modbusrtu.Read(fd, 0x450, 3, 1, 1)
+	//b, err := modbusrtu.Read(fd, 0x450, 3, 1, 1)
+	b, err := modbusrtu.Read(fd, 0x01, 3, 1, 1)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
+	log.Println("yao")
 	log.Println(b)
+	log.Println("yaoyao")
 	err = modbusrtu.Write(fd, 0x03, 1, 3, 1, []byte{0, 1})
 	if err != nil {
 		log.Println(err.Error())

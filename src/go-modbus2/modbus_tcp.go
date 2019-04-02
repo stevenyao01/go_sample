@@ -15,7 +15,7 @@ import (
  * @Description:
  */
 
-func main() () {
+func main1() () {
 	handler := modbus.NewTCPClientHandler("localhost:502")
 	handler.Timeout = 10 * time.Second
 	handler.SlaveId = 0xFF
