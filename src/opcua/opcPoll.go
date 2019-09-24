@@ -8,6 +8,10 @@ package main
  */
 
 import "C"
+import (
+	"fmt"
+	"unsafe"
+)
 
 /*
 //#cgo LDFLAGS: -lopen62541
@@ -75,6 +79,7 @@ typedef struct {
 	//Ua_Credenials		*Credenials;
 } Opc_Ua_Config;
 
+
 void Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config);
 
 //#include "open62541/include/open62541/client_config_default.h"
@@ -90,6 +95,8 @@ void Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config);
 #include <signal.h>
 #include <stdlib.h>
 
+#define UA_ENABLE_ENCRYPTION true
+
 UA_Boolean running = true;
 char *opcNumeric = "Numeric";
 char *opcString = "String";
@@ -101,6 +108,36 @@ static void stopHandler(int sign) {
     running = 0;
 }
 
+#ifdef UA_ENABLE_ENCRYPTION
+static UA_ByteString loadFile(const char *const path) {
+	UA_ByteString fileContents = UA_BYTESTRING_NULL;
+	if(path == NULL)
+		return fileContents;
+
+	FILE *fp = fopen(path, "rb");
+	if(!fp) {
+		errno = 0;
+		return fileContents;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	fileContents.length = (size_t) ftell(fp);
+	fileContents.data = (UA_Byte *) UA_malloc(fileContents.length * sizeof(UA_Byte));
+	if(fileContents.data) {
+		fseek(fp, 0, SEEK_SET);
+		size_t read = fread(fileContents.data, sizeof(UA_Byte), fileContents.length, fp);
+		if(read != fileContents.length)
+			UA_ByteString_clear(&fileContents);
+	} else {
+		fileContents.length = 0;
+	}
+
+	fclose(fp);
+	return fileContents;
+}
+#endif
+
+
 void
 Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
     signal(SIGINT, stopHandler);
@@ -110,13 +147,49 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua password: %s", Ua_Config->Security->Password);
 	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua resource url: %s", Ua_Config->Config->ResourceUrl);
 	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifierType: %s", Ua_Config->NodeIds->IdentifierType);
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxMessageSize: %d", Ua_Config->ChannelConfig->MaxMessageSize);
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkCount: %d", Ua_Config->ChannelConfig->MaxChunkCount);
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkSize: %d", Ua_Config->ChannelConfig->MaxChunkSize);
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua SecurityPolicy: %s", Ua_Config->Security->SecurityPolicy);
 ////////////
+    UA_String securityPolicyUri = UA_STRING_NULL;
+    UA_MessageSecurityMode securityMode = UA_MESSAGESECURITYMODE_INVALID;
+#ifdef UA_ENABLE_ENCRYPTION
+	char *certfile = NULL;
+	char *keyfile = NULL;
+#endif
 	UA_Client *client = UA_Client_new();
 	UA_ClientConfig *cc = UA_Client_getConfig(client);
-	UA_ClientConfig_setDefault(cc);
-	cc->timeout = 1000;
+#ifdef UA_ENABLE_ENCRYPTION
+    if(certfile) { // todo get certificate and privateKey from pfx file
+        UA_ByteString certificate = loadFile(certfile);
+        UA_ByteString privateKey  = loadFile(keyfile);
+        //UA_ClientConfig_setDefaultEncryption(cc, certificate, privateKey, NULL, 0, NULL, 0);
+        UA_ByteString_deleteMembers(&certificate);
+        UA_ByteString_deleteMembers(&privateKey);
+    } else {
+        UA_ClientConfig_setDefault(cc);
+    }
+#else
+    UA_ClientConfig_setDefault(cc);
+#endif
 
-	cc->localConnectionConfig=
+
+	cc->timeout = Ua_Config->Config->RequestTimeOut;
+	// set channelconfig
+	UA_ConnectionConfig uc;
+	uc.protocolVersion = 0;
+	uc.sendBufferSize = Ua_Config->ChannelConfig->MaxChunkSize;
+	uc.recvBufferSize = Ua_Config->ChannelConfig->MaxChunkSize;
+	uc.maxMessageSize = Ua_Config->ChannelConfig->MaxMessageSize;
+	uc.maxChunkCount = Ua_Config->ChannelConfig->MaxChunkCount;
+	cc->localConnectionConfig = uc;
+
+	// set config
+	cc->clientDescription.applicationUri =  UA_STRING_ALLOC(Ua_Config->Config->ApplicationUrl);
+
+	// set requestedSessionTimeout
+	cc->requestedSessionTimeout = Ua_Config->Config->SessionTimeOut;
 
 	while(running) {
 	UA_StatusCode retval;
@@ -128,7 +201,7 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 		if(retval != UA_STATUSCODE_GOOD) {
 			UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Not connected. Retrying to connect in 1 second");
 
-			UA_sleep_ms(1000);
+			UA_sleep_ms(Ua_Config->Config->ReconnectTime);
 			continue;
 		}
 		if (strcmp(Ua_Config->NodeIds->IdentifierType, opcString) == 0){
@@ -137,6 +210,7 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 			retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(Ua_Config->NodeIds->NamespaceIndex, Ua_Config->NodeIds->Identifier), valueStr);
 			if(retval == UA_STATUSCODE_BADCONNECTIONCLOSED) {
 				UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Connection was closed. Reconnecting ...");
+				UA_sleep_ms(Ua_Config->Config->ReconnectTime);
 				continue;
 			}
 			if(retval == UA_STATUSCODE_GOOD) {
@@ -187,10 +261,6 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 */
 import "C"
 
-import (
-	"fmt"
-	"unsafe"
-)
 
 type OpcPoll struct {
 	filename string
@@ -211,30 +281,6 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	var uaConfig C.Opc_Ua_Config
 
 	fmt.Println("lenovo length: ", len(opcUaConfig.NodeIds))
-
-	//pp := (*C.Ua_Node_Id)(C.malloc((C.ulong)(16 * len(opcUaConfig.NodeIds))))
-	//uaConfig.NodeIds = pp
-	//ppp := pp
-	//for _, nodeId := range opcUaConfig.NodeIds {
-	//
-	//	//copy Identifier
-	//	ppp.Identifier = galloc(len(nodeId.Identifier))
-	//	copyStr(ppp.Identifier, nodeId.Identifier)
-	//	defer C.free(unsafe.Pointer(uaConfig.NodeIds.Identifier))
-	//	// copy Field
-	//	ppp.Field = galloc(len(nodeId.Field))
-	//	copyStr(ppp.Field, nodeId.Field)
-	//	defer C.free(unsafe.Pointer(ppp.Field))
-	//	// copy IdentifierType
-	//	ppp.IdentifierType = galloc(len(nodeId.IdentifierType))
-	//	copyStr(ppp.IdentifierType, nodeId.IdentifierType)
-	//	defer C.free(unsafe.Pointer(ppp.IdentifierType))
-	//	// copy NamespaceIndex
-	//	ppp.NamespaceIndex = (C.int)(nodeId.NamespaceIndex)
-	//
-	//	ppp = (*C.Ua_Node_Id)(unsafe.Pointer(uintptr(unsafe.Pointer(ppp)) + uintptr(1)))
-	//}
-
 
 	uaConfig.NodeIds = (*C.Ua_Node_Id)(C.malloc((C.ulong)(16 * len(opcUaConfig.NodeIds))))
 	for _, nodeId := range opcUaConfig.NodeIds {
@@ -342,6 +388,11 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	fmt.Println("typeName: ", typeName)
 	fmt.Println("key: ", key)
 	fmt.Println("arrayLength: ", arrayLength)
+
+	if arrayLength > uaConfig.ChannelConfig.MaxArrayLength {
+		fmt.Println("Get Field(", key, ")'s arrayLength is toolarge:", arrayLength, " maxArrayLength is: ", uaConfig.ChannelConfig.MaxArrayLength)
+		return
+	}
 
 	// loop for arrayLength to convert value.
 	for i := 0; i < int(arrayLength); i++ {

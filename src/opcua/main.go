@@ -65,6 +65,8 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	//"time"
+	"time"
+	"strconv"
 )
 
 // opcua config
@@ -86,6 +88,16 @@ func OpcCallback(pRet C.UA_Read_Retval)(){
 	}
 }
 
+func checkIdentifier(opcUaConfig *OpcUaConfig, exitFlag bool) bool {
+	for _, nodeId := range opcUaConfig.NodeIds {
+		if len(nodeId.Identifier) > int(opcUaConfig.ChannelConfig.MaxStringLength) {
+			fmt.Println("input identifier: ", nodeId.Identifier, "is too long. maxLength is: ", strconv.Itoa(int(opcUaConfig.ChannelConfig.MaxStringLength)))
+			exitFlag = true
+		}
+	}
+	return exitFlag
+}
+
 func main(){
 
 	opcUaConfig, err := NewOpcUaConfig()
@@ -103,47 +115,43 @@ func main(){
 	if err = json.Unmarshal(data, opcUaConfig); err != nil {
 		fmt.Println("parse json error.")
 	}
-	fmt.Println("")
 
-	p, err := NewOpcPoll(configFileName)
-	if err != nil {
-		fmt.Println("init opc poll failed! err: ", err.Error())
-	}
-	for i := 1; i < 2; i++ {
-		p.PollRead(*opcUaConfig)
-		//time.Sleep(1 * time.Second)
+	var exitFlag bool = false
+	exitFlag = checkIdentifier(opcUaConfig, exitFlag)
+	if exitFlag {
+		return
 	}
 
-
-
-	//// use poll interface
-	//p, err := NewOpcPoll(configFileName)
-	//if err == nil {
-	//	fmt.Println("init opc poll failed!")
-	//}
-	//for i := 0; i < 2; i++ {
-	//	p.PollRead()
-	//	time.Sleep(1 * time.Second)
-	//}
-
-	//// use subscribe interface
-	//s, err := NewOpcSubscribe(configFileName)
-	//if err == nil {
-	//	fmt.Println("init opc subscribe failed!")
-	//}
-	//for i := 0; i < 1; i++ {
-	//	s.SubscribeRead()
-	//	time.Sleep(1 * time.Second)
-	//}
-
-	//// use browser interface
-	//b, err := NewOpcBrowser(configFileName)
-	//if err == nil {
-	//	fmt.Println("init opc subscribe failed!")
-	//}
-	//for i := 0; i < 2; i++ {
-	//	b.BrowserRead()
-	//	time.Sleep(1 * time.Second)
-	//}
+	if opcUaConfig.Config.ProcessingMode == "polling" {
+		// use poll interface
+		p, err := NewOpcPoll(configFileName)
+		if err != nil {
+			fmt.Println("init opc poll failed! err: ", err.Error())
+		}
+		for i := 1; i < 2; i++ {
+			p.PollRead(*opcUaConfig)
+			time.Sleep(time.Duration(opcUaConfig.Config.PollingInterval) * time.Millisecond)
+		}
+	} else if opcUaConfig.Config.ProcessingMode == "subscribe" {
+		// use subscribe interface
+		s, err := NewOpcSubscribe(configFileName)
+		if err == nil {
+			fmt.Println("init opc subscribe failed!")
+		}
+		for i := 0; i < 1; i++ {
+			s.SubscribeRead()
+			time.Sleep(1 * time.Second)
+		}
+	} else if opcUaConfig.Config.ProcessingMode == "browser" {
+		// use browser interface
+		b, err := NewOpcBrowser(configFileName)
+		if err == nil {
+			fmt.Println("init opc subscribe failed!")
+		}
+		for i := 0; i < 2; i++ {
+			b.BrowserRead()
+			time.Sleep(1 * time.Second)
+		}
+	}
 
 }
