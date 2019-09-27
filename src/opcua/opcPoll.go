@@ -33,10 +33,10 @@ typedef struct {
 } UA_Read_Retval;
 
 typedef struct{
+	int  *NamespaceIndex;
 	char **Identifier;
 	char **Field;
 	char **IdentifierType;
-	int  *NamespaceIndex;
 } Ua_Node_Id;
 
 typedef struct {
@@ -114,39 +114,48 @@ static void stopHandler(int sign) {
 
 Opc_Ua_Config newOpcUaConfig(int len){
 
-UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "hello world!");
 	Opc_Ua_Config ouc;
-	ouc.NodeIds = malloc(sizeof(Ua_Node_Id) * len);
-	//memset(ouc.NodeIds, 0, sizeof(Ua_Node_Id) * len);
+	ouc.NodeIds = malloc(sizeof(Ua_Node_Id));
 
-	ouc.Security = malloc(sizeof(Ua_Security) * len);
+	ouc.Security = malloc(sizeof(Ua_Security));
 	//memset(ouc.Security, 0, sizeof(Ua_Security) * len);
 
-	ouc.ChannelConfig = malloc(sizeof(Ua_Channel_Config) * len);
+	ouc.ChannelConfig = malloc(sizeof(Ua_Channel_Config));
 	//memset(ouc.ChannelConfig, 0, sizeof(Ua_Channel_Config) * len);
 
-	ouc.Config = malloc(sizeof(Ua_Connect_Config) * len);
+	ouc.Config = malloc(sizeof(Ua_Connect_Config));
 	//memset(ouc.Config, 0, sizeof(Ua_Connect_Config) * len);
 
-	ouc.Credenials = malloc(sizeof(Ua_Credenials) * len);
+	ouc.Credenials = malloc(sizeof(Ua_Credenials));
 	//memset(ouc.Credenials, 0, sizeof(Ua_Credenials) * len);
 
+	ouc.NodeIds->Identifier = malloc(sizeof(char*) * len);
+	ouc.NodeIds->Field = malloc(sizeof(char*) * len);
+	ouc.NodeIds->IdentifierType = malloc(sizeof(char*) * len);
+
 	for (int i = 0; i < len; i++) {
+
 		ouc.NodeIds->Identifier[i] = malloc(sizeof(char) * NODEIDS_IDENTIFIER_LENGTH);
-		//memset(ouc.NodeIds->Identifier[i], 0, sizeof(char) * NODEIDS_IDENTIFIER_LENGTH);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "identifier: %p", ouc.NodeIds->Identifier[i]);
+		memset(ouc.NodeIds->Identifier[i], 0, sizeof(char) * NODEIDS_IDENTIFIER_LENGTH);
 
 		ouc.NodeIds->Field[i] = malloc(sizeof(char) * NODEIDS_FIELD_LENGTH);
-		//memset(ouc.NodeIds->Field[i], 0, sizeof(char) * NODEIDS_FIELD_LENGTH);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "field: %p", ouc.NodeIds->Field[i]);
+		memset(ouc.NodeIds->Field[i], 0, sizeof(char) * NODEIDS_FIELD_LENGTH);
 
 		ouc.NodeIds->IdentifierType[i] = malloc(sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
-		//memset(ouc.NodeIds->IdentifierType[i], 0, sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
+		memset(ouc.NodeIds->IdentifierType[i], 0, sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
+
 	}
 	ouc.NodeIds->NamespaceIndex = malloc(sizeof(int) * len);
-	//memset(ouc.NodeIds->NamespaceIndex[i], 0, sizeof(int) * len);
+	memset(ouc.NodeIds->NamespaceIndex, 0, sizeof(int) * len);
+	//for (int j = 0; j < len; j++){
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "identifier: %p", ouc.NodeIds->Identifier[j]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "field: %p", ouc.NodeIds->Field[j]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "IdentifierType: %p", ouc.NodeIds->IdentifierType[j]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "NamespaceIndex: %p", &(ouc.NodeIds->NamespaceIndex[j]));
+	//}
 
-	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "hello world end!");
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "newOpcUaConfig Success!!");
+
 	return ouc;
 }
 
@@ -213,25 +222,21 @@ void* galloc(int length){
 void
 Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
     signal(SIGINT, stopHandler);
-//////////////////
-	for (int i = 0; i < 2; i++){
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifier: %s", Ua_Config->NodeIds->Identifier[i]);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua field: %s", Ua_Config->NodeIds->Field[i]);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifiertype: %s", Ua_Config->NodeIds->IdentifierType[i]);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua namespaceindex: %d", Ua_Config->NodeIds->NamespaceIndex[i]);
-	}
-	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua NamespaceIndex: %d", *Ua_Config->NodeIds->NamespaceIndex);
-	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifier: %s", Ua_Config->NodeIds->Identifier);
-	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifier: %p", Ua_Config->NodeIds->Identifier);
+
+	//// print param
+	//for (int i = 0; i < 2; i++){
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifier: %s", Ua_Config->NodeIds->Identifier[i]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua field: %s", Ua_Config->NodeIds->Field[i]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifiertype: %s", Ua_Config->NodeIds->IdentifierType[i]);
+	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua namespaceindex: %d", Ua_Config->NodeIds->NamespaceIndex[i]);
+	//}
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua password: %s", Ua_Config->Security->Password);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua resource url: %s", Ua_Config->Config->ResourceUrl);
-	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifierType: %s", Ua_Config->NodeIds->IdentifierType);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxMessageSize: %d", Ua_Config->ChannelConfig->MaxMessageSize);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkCount: %d", Ua_Config->ChannelConfig->MaxChunkCount);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkSize: %d", Ua_Config->ChannelConfig->MaxChunkSize);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua SecurityPolicy: %s", Ua_Config->Security->SecurityPolicy);
-////////////
-return;
+
     UA_String securityPolicyUri = UA_STRING_NULL;
     UA_MessageSecurityMode securityMode = UA_MESSAGESECURITYMODE_INVALID;
 #ifdef UA_ENABLE_ENCRYPTION
@@ -272,7 +277,7 @@ return;
 	cc->requestedSessionTimeout = Ua_Config->Config->SessionTimeOut;
 
 	while(running) {
-	UA_StatusCode retval;
+		UA_StatusCode retval;
 		if (Ua_Config->Config->UseCredenials == 1) {
 			retval = UA_Client_connect_username(client, Ua_Config->Config->ResourceUrl, "username", "password");
 		} else {
@@ -284,6 +289,27 @@ return;
 			UA_sleep_ms(Ua_Config->Config->ReconnectTime);
 			continue;
 		}
+
+
+
+
+
+			UA_Variant *valueStr = UA_Variant_new();
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal string!!!!!!!!!!!! = %s", Ua_Config->NodeIds->Identifier[1]);
+			retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(Ua_Config->NodeIds->NamespaceIndex[1], Ua_Config->NodeIds->Identifier[1]), valueStr);
+			if(retval == UA_STATUSCODE_BADCONNECTIONCLOSED) {
+				UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Connection was closed. Reconnecting ...");
+				UA_sleep_ms(Ua_Config->Config->ReconnectTime);
+				continue;
+			}
+			if(retval == UA_STATUSCODE_GOOD) {
+				pRet->typeName = valueStr->type->typeName;
+				pRet->key = Ua_Config->NodeIds->Field[1];
+				pRet->arrayLength = valueStr->arrayLength;
+				memcpy(pRet->data, valueStr->data, 8);
+			}
+			UA_Variant_clear(valueStr);
+
 		//if (strcmp(Ua_Config->NodeIds->IdentifierType, opcString) == 0){
 		//	UA_Variant *valueStr = UA_Variant_new();
 		//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal string!!!!!!!!!!!!");
@@ -361,119 +387,99 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	uaConfig := C.newOpcUaConfig((C.int)(len(opcUaConfig.NodeIds)))
 	//defer C.deleteOpcUaConfig(uaConfig, (C.int)(len(opcUaConfig.NodeIds)))
 
-	fmt.Println("lenovo length: ", len(opcUaConfig.NodeIds))
-
-	//uaConfig.NodeIds = (*C.Ua_Node_Id)(C.malloc((C.ulong)(16 * len(opcUaConfig.NodeIds))))
 	i := 0
 	for _, nodeId := range opcUaConfig.NodeIds {
-		//copy Identifier
-		addrIdentifier := unsafe.Pointer(uaConfig.NodeIds.Identifier)
-		C.strcpy(*(**C.char)(unsafe.Pointer(uintptr(addrIdentifier) + uintptr(i * 8))), C.CString(nodeId.Identifier))
-		fmt.Println("identifier: ", *(**C.char)(unsafe.Pointer(uintptr(addrIdentifier) + uintptr(i * 8))))
-		//// copy Field
-		addrField := unsafe.Pointer(uaConfig.NodeIds.Field)
-		fmt.Println("field: ", nodeId.Field, "identifier: ", nodeId.Identifier)
-		C.strcpy(*(**C.char)(unsafe.Pointer(uintptr(addrField) + uintptr(i * 8))), C.CString(nodeId.Field))
-		fmt.Println("field: ", *(**C.char)(unsafe.Pointer(uintptr(addrField) + uintptr(i * 8))))
-		//addrField := C.galloc((C.int)(len(nodeId.Identifier)))
-		//uaConfig.NodeIds.Field = &(*(*C.char)(addrField))
-		//copyStr(uaConfig.NodeIds.Field, nodeId.Field)
-		//defer C.free(unsafe.Pointer(uaConfig.NodeIds.Field))
-		//// copy IdentifierType
-		addrIdentifierType := unsafe.Pointer(uaConfig.NodeIds.IdentifierType)
-		C.strcpy(*(**C.char)(unsafe.Pointer(uintptr(addrIdentifierType) + uintptr(i * 8))), C.CString(nodeId.IdentifierType))
-		fmt.Println("IdentifierType: ", *(**C.char)(unsafe.Pointer(uintptr(addrIdentifierType) + uintptr(i * 8))))
-		//addrIdentifierType := C.galloc((C.int)(len(nodeId.Identifier)))
-		//uaConfig.NodeIds.IdentifierType = &(*(*C.char)(addrIdentifierType))
-		//copyStr(uaConfig.NodeIds.IdentifierType, nodeId.IdentifierType)
-		//defer C.free(unsafe.Pointer(uaConfig.NodeIds.IdentifierType))
-		//// copy NamespaceIndexs
-		addrNamespaceIndex := unsafe.Pointer(uaConfig.NodeIds.NamespaceIndex)
-		*(*int)(unsafe.Pointer(uintptr(addrNamespaceIndex) + uintptr(i * 4))) = int(nodeId.NamespaceIndex)
-		//*(*C.int)(unsafe.Pointer(uintptr(addrNamespaceIndex) + uintptr(i * 8))) = (C.int)(nodeId.NamespaceIndex)
-		//*(**C.int)(unsafe.Pointer(uintptr(addrNamespaceIndex) + uintptr(i * 8))) = *(C.int)(nodeId.NamespaceIndex)
-		//C.strcpy(*(**C.char)(unsafe.Pointer(uintptr(addrNamespaceIndex) + uintptr(i * 8))), C.CString(nodeId.NamespaceIndex))
-		//addrNamespaceIndex := C.galloc((C.int)(len(nodeId.Identifier)))
-		//uaConfig.NodeIds.NamespaceIndex = &(*(*C.int)(addrNamespaceIndex))
-		//*(*int)(unsafe.Pointer(uintptr(addrNamespaceIndex) + uintptr(i*4))) = int(nodeId.NamespaceIndex)
+		addrIdentifier := uintptr(unsafe.Pointer(uaConfig.NodeIds.Identifier))
+		C.strcpy(*(**C.char)(unsafe.Pointer(addrIdentifier + uintptr(8 * i))), C.CString(nodeId.Identifier))
+		//fmt.Println("Identifier: ", *(**C.char)(unsafe.Pointer(addrIdentifier + uintptr(i * 8))))
+
+		addrField := uintptr(unsafe.Pointer(uaConfig.NodeIds.Field))
+		C.strcpy(*(**C.char)(unsafe.Pointer(addrField + uintptr(8 * i))), C.CString(nodeId.Field))
+		//fmt.Println("Field: ", *(**C.char)(unsafe.Pointer(addrField + uintptr(i * 8))))
+
+		addrIdentifierType := uintptr(unsafe.Pointer(uaConfig.NodeIds.IdentifierType))
+		C.strcpy(*(**C.char)(unsafe.Pointer(addrIdentifierType + uintptr(8 * i))), C.CString(nodeId.IdentifierType))
+		//fmt.Println("IdentifierType: ", *(**C.char)(unsafe.Pointer(addrIdentifierType + uintptr(8 * i))))
+
+		// NamespaceIndex
+		addrNamespaceIndex := uintptr(unsafe.Pointer(uaConfig.NodeIds.NamespaceIndex))
+		*(*C.int)(unsafe.Pointer(addrNamespaceIndex + uintptr(i *4))) = (C.int)(nodeId.NamespaceIndex)
+
 		i++
 	}
 
 
-	//// init security
-	//uaConfig.Security = (*C.Ua_Security)(C.malloc(28))
-	//// copy Password
-	//uaConfig.Security.Password = C.galloc(len(opcUaConfig.Security.Password))
-	//copyStr(uaConfig.Security.Password, opcUaConfig.Security.Password)
-	//defer C.free(unsafe.Pointer(uaConfig.Security.Password))
-	//// copy StoreType
-	//uaConfig.Security.StoreType = C.galloc(len(opcUaConfig.Security.StoreType))
-	//copyStr(uaConfig.Security.StoreType, opcUaConfig.Security.StoreType)
-	//defer C.free(unsafe.Pointer(uaConfig.Security.StoreType))
-	//// copy KeystoreFilePath
-	//uaConfig.Security.KeystoreFilePath = C.galloc(len(opcUaConfig.Security.KeystoreFilePath))
-	//copyStr(uaConfig.Security.KeystoreFilePath, opcUaConfig.Security.KeystoreFilePath)
-	//defer C.free(unsafe.Pointer(uaConfig.Security.KeystoreFilePath))
-	//// copy Alias
-	//uaConfig.Security.Alias = C.galloc(len(opcUaConfig.Security.Alias))
-	//copyStr(uaConfig.Security.Alias, opcUaConfig.Security.Alias)
-	//defer C.free(unsafe.Pointer(uaConfig.Security.Alias))
-	//// copy SecurityPolicy
-	//uaConfig.Security.SecurityPolicy = C.galloc(len(opcUaConfig.Security.SecurityPolicy))
-	//copyStr(uaConfig.Security.SecurityPolicy, opcUaConfig.Security.SecurityPolicy)
-	//defer C.free(unsafe.Pointer(uaConfig.Security.SecurityPolicy))
-	//
-	//
-	//// init channel
-	//uaConfig.ChannelConfig = (*C.Ua_Channel_Config)(C.malloc(20))
-	//// copy MaxChunkCount
-	//uaConfig.ChannelConfig.MaxChunkCount = (C.int)(opcUaConfig.ChannelConfig.MaxChunkCount)
-	//// copy MaxArrayLength
-	//uaConfig.ChannelConfig.MaxArrayLength = (C.int)(opcUaConfig.ChannelConfig.MaxArrayLength)
-	//// copy MaxMessageSize
-	//uaConfig.ChannelConfig.MaxMessageSize = (C.int)(opcUaConfig.ChannelConfig.MaxMessageSize)
-	//// copy MaxStringLength
-	//uaConfig.ChannelConfig.MaxStringLength = (C.int)(opcUaConfig.ChannelConfig.MaxStringLength)
-	//// copy MaxChunkSize
-	//uaConfig.ChannelConfig.MaxChunkSize = (C.int)(opcUaConfig.ChannelConfig.MaxChunkSize)
-	//
-	//
-	//// init connect config
-	//uaConfig.Config = (*C.Ua_Connect_Config)(C.malloc(44))
-	//// copy ResourceUrl
-	//uaConfig.Config.ResourceUrl = C.galloc(len(opcUaConfig.Config.ResourceUrl))
-	//copyStr(uaConfig.Config.ResourceUrl, opcUaConfig.Config.ResourceUrl)
-	//defer C.free(unsafe.Pointer(uaConfig.Config.ResourceUrl))
-	//// copy UseCredenials
-	//uaConfig.Config.UseCredenials = (C.int)(boolToInt(opcUaConfig.Config.UseCredenials))
-	//// copy PollingInterval
-	//uaConfig.Config.PollingInterval = (C.int)(opcUaConfig.Config.PollingInterval)
-	//// copy ApplicationUrl
-	//uaConfig.Config.ApplicationUrl = C.galloc(len(opcUaConfig.Config.ApplicationUrl))
-	//copyStr(uaConfig.Config.ApplicationUrl, opcUaConfig.Config.ApplicationUrl)
-	//defer C.free(unsafe.Pointer(uaConfig.Config.ApplicationUrl))
-	//// copy SessionTimeOut
-	//uaConfig.Config.SessionTimeOut = (C.int)(opcUaConfig.Config.SessionTimeOut)
-	//// copy ProcessingMode
-	//uaConfig.Config.ProcessingMode = C.galloc(len(opcUaConfig.Config.ProcessingMode))
-	//copyStr(uaConfig.Config.ProcessingMode, opcUaConfig.Config.ProcessingMode)
-	//defer C.free(unsafe.Pointer(uaConfig.Config.ProcessingMode))
-	//// copy RequestTimeOut
-	//uaConfig.Config.RequestTimeOut = (C.int)(opcUaConfig.Config.RequestTimeOut)
-	//// copy ReconnectTime
-	//uaConfig.Config.ReconnectTime = (C.int)(opcUaConfig.Config.ReconnectTime)
-	//
-	//// init credenials
-	////uaConfig.Credenials = (*C.Ua_Connect_Config)(C.malloc(44))
-	//// copy useName
-	////uaConfig.Config.ProcessingMode = galloc(len(opcUaConfig.Config.ProcessingMode))
-	////copyStr(uaConfig.Config.ProcessingMode, opcUaConfig.Config.ProcessingMode)
-	////defer C.free(unsafe.Pointer(uaConfig.Config.ProcessingMode))
-	////
-	////// copy passWord
-	////uaConfig.Config.ProcessingMode = galloc(len(opcUaConfig.Config.ProcessingMode))
-	////copyStr(uaConfig.Config.ProcessingMode, opcUaConfig.Config.ProcessingMode)
-	////defer C.free(unsafe.Pointer(uaConfig.Config.ProcessingMode))
+	// init security
+	// copy Password
+	uaConfig.Security.Password = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Security.Password))))
+	C.strcpy(uaConfig.Security.Password, C.CString(opcUaConfig.Security.Password))
+	defer C.free(unsafe.Pointer(uaConfig.Security.Password))
+	// copy StoreType
+	uaConfig.Security.StoreType = (*C.char)(C.galloc((C.int)((C.int)(len(opcUaConfig.Security.StoreType)))))
+	C.strcpy(uaConfig.Security.StoreType, C.CString(opcUaConfig.Security.StoreType))
+	defer C.free(unsafe.Pointer(uaConfig.Security.StoreType))
+	// copy KeystoreFilePath
+	uaConfig.Security.KeystoreFilePath = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Security.KeystoreFilePath))))
+	C.strcpy(uaConfig.Security.KeystoreFilePath, C.CString(opcUaConfig.Security.KeystoreFilePath))
+	defer C.free(unsafe.Pointer(uaConfig.Security.KeystoreFilePath))
+	// copy Alias
+	uaConfig.Security.Alias = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Security.Alias))))
+	C.strcpy(uaConfig.Security.Alias, C.CString(opcUaConfig.Security.Alias))
+	defer C.free(unsafe.Pointer(uaConfig.Security.Alias))
+	// copy SecurityPolicy
+	uaConfig.Security.SecurityPolicy = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Security.SecurityPolicy))))
+	C.strcpy(uaConfig.Security.SecurityPolicy, C.CString(opcUaConfig.Security.SecurityPolicy))
+	defer C.free(unsafe.Pointer(uaConfig.Security.SecurityPolicy))
+
+
+	// init channel
+	// copy MaxChunkCount
+	uaConfig.ChannelConfig.MaxChunkCount = (C.int)(opcUaConfig.ChannelConfig.MaxChunkCount)
+	// copy MaxArrayLength
+	uaConfig.ChannelConfig.MaxArrayLength = (C.int)(opcUaConfig.ChannelConfig.MaxArrayLength)
+	// copy MaxMessageSize
+	uaConfig.ChannelConfig.MaxMessageSize = (C.int)(opcUaConfig.ChannelConfig.MaxMessageSize)
+	// copy MaxStringLength
+	uaConfig.ChannelConfig.MaxStringLength = (C.int)(opcUaConfig.ChannelConfig.MaxStringLength)
+	// copy MaxChunkSize
+	uaConfig.ChannelConfig.MaxChunkSize = (C.int)(opcUaConfig.ChannelConfig.MaxChunkSize)
+
+
+	// init connect config
+	// copy ResourceUrl
+	uaConfig.Config.ResourceUrl = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Config.ResourceUrl))))
+	C.strcpy(uaConfig.Config.ResourceUrl, C.CString(opcUaConfig.Config.ResourceUrl))
+	defer C.free(unsafe.Pointer(uaConfig.Config.ResourceUrl))
+	// copy UseCredenials
+	uaConfig.Config.UseCredenials = (C.int)(boolToInt(opcUaConfig.Config.UseCredenials))
+	// copy PollingInterval
+	uaConfig.Config.PollingInterval = (C.int)(opcUaConfig.Config.PollingInterval)
+	// copy ApplicationUrl
+	uaConfig.Config.ApplicationUrl = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Config.ApplicationUrl))))
+	C.strcpy(uaConfig.Config.ApplicationUrl, C.CString(opcUaConfig.Config.ApplicationUrl))
+	defer C.free(unsafe.Pointer(uaConfig.Config.ApplicationUrl))
+	// copy SessionTimeOut
+	uaConfig.Config.SessionTimeOut = (C.int)(opcUaConfig.Config.SessionTimeOut)
+	// copy ProcessingMode
+	uaConfig.Config.ProcessingMode = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Config.ProcessingMode))))
+	C.strcpy(uaConfig.Config.ProcessingMode, C.CString(opcUaConfig.Config.ProcessingMode))
+	defer C.free(unsafe.Pointer(uaConfig.Config.ProcessingMode))
+	// copy RequestTimeOut
+	uaConfig.Config.RequestTimeOut = (C.int)(opcUaConfig.Config.RequestTimeOut)
+	// copy ReconnectTime
+	uaConfig.Config.ReconnectTime = (C.int)(opcUaConfig.Config.ReconnectTime)
+
+	// init credenials
+	// copy useName
+	uaConfig.Credenials.userName = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Credenials.userName))))
+	C.strcpy(uaConfig.Credenials.userName, C.CString(opcUaConfig.Credenials.userName))
+	defer C.free(unsafe.Pointer(uaConfig.Credenials.userName))
+	//fmt.Println("Credenials userName: ", *uaConfig.Credenials.userName)
+	// copy passWord
+	uaConfig.Credenials.passWord = (*C.char)(C.galloc((C.int)(len(opcUaConfig.Credenials.passWord))))
+	C.strcpy(uaConfig.Credenials.passWord, C.CString(opcUaConfig.Credenials.passWord))
+	defer C.free(unsafe.Pointer(uaConfig.Credenials.passWord))
+	//fmt.Println("Credenials passWord: ", *uaConfig.Credenials.passWord)
 
 	// call cgo here
 	C.Polling(&pDetectInfo, &uaConfig)

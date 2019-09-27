@@ -1,0 +1,51 @@
+package main
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+typedef struct Test{
+ int  *ptr;
+ char *str;
+}Test;
+Test newTest() {
+ Test test;
+
+ test.ptr = malloc(sizeof(int) * 10);
+ test.str = malloc(sizeof(char) * 1024);
+
+ memset(test.ptr, 0, sizeof(int) * 10);
+ memset(test.str, 0, sizeof(char) * 1024);
+
+ return test;
+}
+void printTest(Test test) {
+ printf("arr:");
+ for (int i=0; i<10; i++) {
+  printf("%d ", test.ptr[i]);
+ }
+ printf("\n");
+ printf("str:%s\n", test.str);
+}
+*/
+import "C"
+import (
+ "unsafe"
+)
+
+func main() {
+ t := C.newTest()
+
+ C.printTest(t)
+
+ // 取到C结构体中ptr指针
+ addr := uintptr(unsafe.Pointer(t.ptr))
+
+ // 模拟数组操作
+ for i := uintptr(0); i < 10; i++ {
+  *(*int32)(unsafe.Pointer(addr + i*4)) = int32(i)
+ }
+ C.strcpy(t.str, C.CString("hello,world"))
+
+ C.printTest(t)
+}

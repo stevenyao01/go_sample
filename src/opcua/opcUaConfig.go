@@ -48,16 +48,17 @@ type Config struct {
 	ReconnectTime   uint32 `json:"reConnectTime"`
 }
 
-//typed Ua_Credenials struct {
-//char *userName;
-//char *passWord;
-//}
+type Credenials struct {
+	userName     string `json:"userName"`
+	passWord     string `json:"passWord"`
+}
 
 type OpcUaConfig struct {
 	NodeIds       []NodeId      `json:"nodeIds"`
 	Security      Security      `json:"security"`
 	ChannelConfig ChannelConfig `json:"channelConfig"`
 	Config        Config        `json:"config"`
+	Credenials    Credenials    `json:"credenials"`
 }
 
 func (o *OpcUaConfig) Fix() () {
