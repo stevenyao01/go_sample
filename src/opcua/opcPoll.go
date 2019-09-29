@@ -25,12 +25,17 @@ import (
 #cgo CFLAGS: -I ./open62541/build-shared64/src_generated
 #cgo LDFLAGS: -L./open62541/build-shared64/bin/Debug -lopen62541
 
+
 typedef struct {
-    const char *typeName;
-    const char *key;
-	int   arrayLength;
-	void  *data;
-} UA_Read_Retval;
+    char **typeName;
+    char **key;
+	int   *arrayLength;
+	void  **data;
+} Ua_Single_Node;
+
+typedef struct {
+    Ua_Single_Node *Usn;
+} Ua_Read_Retval;
 
 typedef struct{
 	int  *NamespaceIndex;
@@ -80,7 +85,7 @@ typedef struct {
 } Opc_Ua_Config;
 
 
-void Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config);
+void Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len);
 
 //#include "open62541/include/open62541/client_config_default.h"
 //#include "open62541/include/open62541/client_highlevel.h"
@@ -96,10 +101,16 @@ void Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config);
 #include <stdlib.h>
 
 #define UA_ENABLE_ENCRYPTION true
+// define for ua config
 #define NODEIDS_IDENTIFIER_LENGTH 512
 #define NODEIDS_FIELD_LENGTH 32
 #define NODEIDS_IDENTIFIERTYPE_LENGTH 32
 #define NODEIDS_NAMESPACEINDEX_LENGTH 32
+// define for ua return value
+#define NODEIDS_RET_TYPENAME_LENGTH 32
+#define NODEIDS_RET_KEY_LENGTH 32
+#define NODEIDS_RET_DATA_LENGTH 512
+#define NODEIDS_RET_ARRAY_LENGTH 4
 
 UA_Boolean running = true;
 char *opcNumeric = "Numeric";
@@ -110,6 +121,33 @@ char *opcOpaque = "Opaque";
 static void stopHandler(int sign) {
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Received Ctrl-C");
     running = 0;
+}
+
+Ua_Read_Retval newOPcUaRetval(int len){
+	Ua_Read_Retval urr;
+
+	urr.Usn = malloc(sizeof(char *));
+	memset(urr.Usn, 0, sizeof(char *));
+
+	urr.Usn->arrayLength = malloc(sizeof(int) * len);
+	memset(urr.Usn, 0, sizeof(int) * len);
+
+	urr.Usn->typeName = malloc(sizeof(char *) * len);
+	memset(urr.Usn->typeName, 0, sizeof(char *) * len);
+	urr.Usn->key = malloc(sizeof(char *) * len);
+	memset(urr.Usn->key, 0, sizeof(char *) * len);
+	urr.Usn->data = malloc(sizeof(char *) * len);
+	memset(urr.Usn->data, 0, sizeof(char *) * len);
+
+	for(int i = 0; i < len; i++){
+		urr.Usn->typeName[i] = malloc(sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
+		memset(urr.Usn->typeName[i], 0, sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
+		urr.Usn->key[i] = malloc(sizeof(char) * NODEIDS_RET_KEY_LENGTH);
+		memset(urr.Usn->key[i], 0, sizeof(char) * NODEIDS_RET_KEY_LENGTH);
+		urr.Usn->data[i] = malloc(sizeof(void) * NODEIDS_RET_DATA_LENGTH);
+		memset(urr.Usn->data[i], 0, sizeof(void) * NODEIDS_RET_DATA_LENGTH);
+	}
+	return urr;
 }
 
 Opc_Ua_Config newOpcUaConfig(int len){
@@ -143,10 +181,11 @@ Opc_Ua_Config newOpcUaConfig(int len){
 
 		ouc.NodeIds->IdentifierType[i] = malloc(sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
 		memset(ouc.NodeIds->IdentifierType[i], 0, sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
-
 	}
 	ouc.NodeIds->NamespaceIndex = malloc(sizeof(int) * len);
 	memset(ouc.NodeIds->NamespaceIndex, 0, sizeof(int) * len);
+
+	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "len: %d", len);
 	//for (int j = 0; j < len; j++){
 	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "identifier: %p", ouc.NodeIds->Identifier[j]);
 	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "field: %p", ouc.NodeIds->Field[j]);
@@ -220,11 +259,11 @@ void* galloc(int length){
 }
 
 void
-Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
+Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len) {
     signal(SIGINT, stopHandler);
 
 	//// print param
-	//for (int i = 0; i < 2; i++){
+	//for (int i = 0; i < len; i++){
 	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifier: %s", Ua_Config->NodeIds->Identifier[i]);
 	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua field: %s", Ua_Config->NodeIds->Field[i]);
 	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua identifiertype: %s", Ua_Config->NodeIds->IdentifierType[i]);
@@ -236,6 +275,7 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkCount: %d", Ua_Config->ChannelConfig->MaxChunkCount);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua maxChunkSize: %d", Ua_Config->ChannelConfig->MaxChunkSize);
 	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua SecurityPolicy: %s", Ua_Config->Security->SecurityPolicy);
+	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua node len: %d", len);
 
     UA_String securityPolicyUri = UA_STRING_NULL;
     UA_MessageSecurityMode securityMode = UA_MESSAGESECURITYMODE_INVALID;
@@ -290,68 +330,60 @@ Polling(UA_Read_Retval *pRet, Opc_Ua_Config *Ua_Config) {
 			continue;
 		}
 
+		for(int i = 0; i < len; i++){
+			if (strcmp(*Ua_Config->NodeIds->IdentifierType, opcString) == 0){
+				UA_Variant *valueStr = UA_Variant_new();
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal string!!!!!!!!!!!!");
+				retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(Ua_Config->NodeIds->NamespaceIndex[i], Ua_Config->NodeIds->Identifier[i]), valueStr);
+				if(retval == UA_STATUSCODE_BADCONNECTIONCLOSED) {
+					UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Connection was closed. Reconnecting ...");
+					UA_sleep_ms(Ua_Config->Config->ReconnectTime);
+					continue;
+				}
+				if(retval == UA_STATUSCODE_GOOD) {
+					//pRet->Usn->typeName[i] = valueStr->type->typeName;
+					memcpy(pRet.Usn->typeName[i], valueStr->type->typeName, sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
+					////pRet->Usn->key[i] = Ua_Config->NodeIds->Field[i];
+					memcpy(pRet.Usn->key[i], Ua_Config->NodeIds->Field[i], sizeof(char) * NODEIDS_RET_KEY_LENGTH);
+					pRet.Usn->arrayLength[i] = valueStr->arrayLength;
+					//memcpy(pRet.Usn->data[i], valueStr->data, sizeof(char) * NODEIDS_RET_DATA_LENGTH);
+					memcpy(pRet.Usn->data[i], valueStr->data, sizeof(valueStr->data));
 
-
-
-
-			UA_Variant *valueStr = UA_Variant_new();
-			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal string!!!!!!!!!!!! = %s", Ua_Config->NodeIds->Identifier[1]);
-			retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(Ua_Config->NodeIds->NamespaceIndex[1], Ua_Config->NodeIds->Identifier[1]), valueStr);
-			if(retval == UA_STATUSCODE_BADCONNECTIONCLOSED) {
-				UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Connection was closed. Reconnecting ...");
-				UA_sleep_ms(Ua_Config->Config->ReconnectTime);
-				continue;
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "sizeof(bool): %ld", sizeof(bool));
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "filed: %s", Ua_Config->NodeIds->Field[i]);
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "pRet.Usn->arrayLength[%d]: %d", i, pRet.Usn->arrayLength[i]);
+					for (int m = 0; m < 8; m++){
+						UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "filed: %d", (bool)(valueStr->data + m * sizeof(bool)));
+					}
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 0));
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 1));
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 2));
+				}
+				UA_Variant_clear(valueStr);
 			}
-			if(retval == UA_STATUSCODE_GOOD) {
-				pRet->typeName = valueStr->type->typeName;
-				pRet->key = Ua_Config->NodeIds->Field[1];
-				pRet->arrayLength = valueStr->arrayLength;
-				memcpy(pRet->data, valueStr->data, 8);
+			if (strcmp(*Ua_Config->NodeIds->IdentifierType, opcNumeric) == 0){
+				UA_Variant value;
+				UA_Variant_init(&value);
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal Numeric!!!!!!!!!!!!");
+				const UA_NodeId nodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
+        		retval = UA_Client_readValueAttribute(client, nodeId, &value);
+			//if(retval == UA_STATUSCODE_GOOD &&
+			//	UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_DATETIME])) {
+			//	UA_DateTime raw_date = *(UA_DateTime *) value->data;
+			//	UA_DateTimeStruct dts = UA_DateTime_toStruct(raw_date);
+			//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
+			//	"date is: %02u-%02u-%04u %02u:%02u:%02u.%03u",
+			//	dts.day, dts.month, dts.year, dts.hour, dts.min, dts.sec, dts.milliSec);
+			//}
+				UA_Variant_clear(&value);
 			}
-			UA_Variant_clear(valueStr);
-
-		//if (strcmp(Ua_Config->NodeIds->IdentifierType, opcString) == 0){
-		//	UA_Variant *valueStr = UA_Variant_new();
-		//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal string!!!!!!!!!!!!");
-		//	retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(*Ua_Config->NodeIds->NamespaceIndex, Ua_Config->NodeIds->Identifier), valueStr);
-		//	if(retval == UA_STATUSCODE_BADCONNECTIONCLOSED) {
-		//		UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Connection was closed. Reconnecting ...");
-		//		UA_sleep_ms(Ua_Config->Config->ReconnectTime);
-		//		continue;
-		//	}
-		//	if(retval == UA_STATUSCODE_GOOD) {
-		//		pRet->typeName = valueStr->type->typeName;
-		//		pRet->key = Ua_Config->NodeIds->Field;
-		//		pRet->arrayLength = valueStr->arrayLength;
-		//		memcpy(pRet->data, valueStr->data, 8);
-		//	}
-		//	UA_Variant_clear(valueStr);
-		//}
-		//if (strcmp(Ua_Config->NodeIds->IdentifierType, opcNumeric) == 0){
-		//	UA_Variant value;
-		//	UA_Variant_init(&value);
-		//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal Numeric!!!!!!!!!!!!");
-		//	const UA_NodeId nodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
-        	//retval = UA_Client_readValueAttribute(client, nodeId, &value);
-		//	//if(retval == UA_STATUSCODE_GOOD &&
-		//	//	UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_DATETIME])) {
-		//	//	UA_DateTime raw_date = *(UA_DateTime *) value->data;
-		//	//	UA_DateTimeStruct dts = UA_DateTime_toStruct(raw_date);
-		//	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
-		//	//	"date is: %02u-%02u-%04u %02u:%02u:%02u.%03u",
-		//	//	dts.day, dts.month, dts.year, dts.hour, dts.min, dts.sec, dts.milliSec);
-		//	//}
-		//	UA_Variant_clear(&value);
-		//}
-		//if (strcmp(Ua_Config->NodeIds->IdentifierType, opcUUID) == 0){
-		//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal UUID!!!!!!!!!!!!");
-		//}
-		//if (strcmp(Ua_Config->NodeIds->IdentifierType, opcOpaque) == 0){
-		//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal Opaque!!!!!!!!!!!!");
-		//}
-
-
-
+			if (strcmp(*Ua_Config->NodeIds->IdentifierType, opcUUID) == 0){
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal UUID!!!!!!!!!!!!");
+			}
+			if (strcmp(*Ua_Config->NodeIds->IdentifierType, opcOpaque) == 0){
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "equal Opaque!!!!!!!!!!!!");
+			}
+		}
 
 		//UA_sleep_ms(1000);
 		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua program loop.");
@@ -375,16 +407,20 @@ type OpcPoll struct {
 
 func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	fmt.Println("=============================== cgo opcua polling ===========================")
-	var pDetectInfo C.UA_Read_Retval
-	//pDetectInfo.data = unsafe.Pointer((*C.void)(C.malloc(dataCacheSize)))
-	//if pDetectInfo.data == nil {
-	//	fmt.Println("go malloc data failed.")
-	//}
-	pDetectInfo.data = unsafe.Pointer(C.galloc(dataCacheSize))
-	defer C.free(unsafe.Pointer(pDetectInfo.data))
+	//var pDetectInfo C.UA_Read_Retval
+	////pDetectInfo.data = unsafe.Pointer((*C.void)(C.malloc(dataCacheSize)))
+	////if pDetectInfo.data == nil {
+	////	fmt.Println("go malloc data failed.")
+	////}
+	//pDetectInfo.data = unsafe.Pointer(C.galloc(dataCacheSize))
+	//defer C.free(unsafe.Pointer(pDetectInfo.data))
 ////////////////////
+	nodeIdLength := (C.int)(len(opcUaConfig.NodeIds))
+	urr := C.newOPcUaRetval(nodeIdLength)
+
+///////////////////////////////////
 	// test trans opc ua config
-	uaConfig := C.newOpcUaConfig((C.int)(len(opcUaConfig.NodeIds)))
+	uaConfig := C.newOpcUaConfig(nodeIdLength)
 	//defer C.deleteOpcUaConfig(uaConfig, (C.int)(len(opcUaConfig.NodeIds)))
 
 	i := 0
@@ -482,26 +518,40 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	//fmt.Println("Credenials passWord: ", *uaConfig.Credenials.passWord)
 
 	// call cgo here
-	C.Polling(&pDetectInfo, &uaConfig)
+	C.Polling(urr, &uaConfig, nodeIdLength)
 
 	// get cgo return
-	typeName := C.GoString(pDetectInfo.typeName)
-	arrayLength := pDetectInfo.arrayLength
-	key := C.GoString(pDetectInfo.key)
+	//typeName := C.GoString(urr.Usn[i].typeName)
+	//arrayLength := pDetectInfo.arrayLength
+	//key := C.GoString(pDetectInfo.key)
 
-	fmt.Println("typeName: ", typeName)
-	fmt.Println("key: ", key)
-	fmt.Println("arrayLength: ", arrayLength)
-
-	if arrayLength > uaConfig.ChannelConfig.MaxArrayLength {
-		fmt.Println("Get Field(", key, ")'s arrayLength is toolarge:", arrayLength, " maxArrayLength is: ", uaConfig.ChannelConfig.MaxArrayLength)
-		return
+	addrTypeName := uintptr(unsafe.Pointer(urr.Usn.typeName))
+	addrKey := uintptr(unsafe.Pointer(urr.Usn.key))
+	addrData := uintptr(unsafe.Pointer(urr.Usn.data))
+	for i := 0; i < int(nodeIdLength); i++ {
+		fmt.Println("arrayLength: ", int(*urr.Usn.arrayLength))
+		fmt.Println("addrTypeName: ", C.GoString(*(**C.char)(unsafe.Pointer(addrTypeName + uintptr(i * 8)))))
+		fmt.Println("addrKey: ", C.GoString(*(**C.char)(unsafe.Pointer(addrKey + uintptr(i * 8)))))
+		fmt.Println("addrData: ", *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8))))
+		pDataAddr := *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8)))
+		for j := 0; j < int(*urr.Usn.arrayLength); j++ {
+			fmt.Println("data bbbb: ", *(*bool)(unsafe.Pointer(uintptr(unsafe.Pointer(pDataAddr)) + uintptr(j))))
+		}
 	}
 
-	// loop for arrayLength to convert value.
-	for i := 0; i < int(arrayLength); i++ {
-		fmt.Println("data: ", *(*bool)(unsafe.Pointer(uintptr(pDetectInfo.data) + uintptr(i))))
-	}
+	//fmt.Println("typeName: ", typeName)
+	//fmt.Println("key: ", key)
+	//fmt.Println("arrayLength: ", arrayLength)
+	//
+	//if arrayLength > uaConfig.ChannelConfig.MaxArrayLength {
+	//	fmt.Println("Get Field(", key, ")'s arrayLength is toolarge:", arrayLength, " maxArrayLength is: ", uaConfig.ChannelConfig.MaxArrayLength)
+	//	return
+	//}
+	//
+	//// loop for arrayLength to convert value.
+	//for i := 0; i < int(arrayLength); i++ {
+	//	fmt.Println("data: ", *(*bool)(unsafe.Pointer(uintptr(pDetectInfo.data) + uintptr(i))))
+	//}
 
 	fmt.Println("end....")
 }

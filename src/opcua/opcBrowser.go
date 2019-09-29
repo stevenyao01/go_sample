@@ -58,7 +58,7 @@ browserObjects(UA_Client *client){
     bReq.requestedMaxReferencesPerNode = 0;
     bReq.nodesToBrowse = UA_BrowseDescription_new();
     bReq.nodesToBrowseSize = 1;
-    bReq.nodesToBrowse[0].nodeId = UA_NODEID_NUMERIC(2, 2250);
+    bReq.nodesToBrowse[0].nodeId = UA_NODEID_NUMERIC(2, 2256);
     //bReq.nodesToBrowse[0].nodeId = UA_NODEID_STRING(2, "Demo.Static.Arrays");
 	bReq.nodesToBrowse[0].resultMask = UA_BROWSERESULTMASK_ALL;
 	UA_BrowseResponse bResp = UA_Client_Service_browse(client, bReq);
