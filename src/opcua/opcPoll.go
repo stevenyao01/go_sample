@@ -25,68 +25,6 @@ import (
 #cgo CFLAGS: -I ./open62541/build-shared64/src_generated
 #cgo LDFLAGS: -L./open62541/build-shared64/bin/Debug -lopen62541
 
-
-typedef struct {
-    char **typeName;
-    char **key;
-	int   *arrayLength;
-	void  **data;
-} Ua_Single_Node;
-
-typedef struct {
-    Ua_Single_Node *Usn;
-} Ua_Read_Retval;
-
-typedef struct{
-	int  *NamespaceIndex;
-	char **Identifier;
-	char **Field;
-	char **IdentifierType;
-} Ua_Node_Id;
-
-typedef struct {
-	char *Password;
-	char *StoreType;
-	char *KeystoreFilePath;
-	char *Alias;
-	char *SecurityPolicy;
-} Ua_Security;
-
-typedef struct {
-	int MaxChunkCount;
-	int MaxArrayLength;
-	int MaxMessageSize;
-	int MaxStringLength;
-	int MaxChunkSize;
-} Ua_Channel_Config;
-
-typedef struct {
-	char *ResourceUrl;
-	int  UseCredenials;
-	int  PollingInterval;
-	char *ApplicationUrl;
-	int  SessionTimeOut;
-	char *ProcessingMode;
-	int  RequestTimeOut;
-	int  ReconnectTime;
-} Ua_Connect_Config;
-
-typedef struct {
-	char *userName;
-	char *passWord;
-} Ua_Credenials;
-
-typedef struct {
-	Ua_Node_Id 			*NodeIds;
-	Ua_Security 		*Security;
-	Ua_Channel_Config 	*ChannelConfig;
-	Ua_Connect_Config   *Config;
-	Ua_Credenials		*Credenials;
-} Opc_Ua_Config;
-
-
-void Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len);
-
 //#include "open62541/include/open62541/client_config_default.h"
 //#include "open62541/include/open62541/client_highlevel.h"
 //#include "open62541/include/open62541/client_subscriptions.h"
@@ -99,18 +37,21 @@ void Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len);
 
 #include <signal.h>
 #include <stdlib.h>
+#include "opcua.h"
 
-#define UA_ENABLE_ENCRYPTION true
-// define for ua config
-#define NODEIDS_IDENTIFIER_LENGTH 512
-#define NODEIDS_FIELD_LENGTH 32
-#define NODEIDS_IDENTIFIERTYPE_LENGTH 32
-#define NODEIDS_NAMESPACEINDEX_LENGTH 32
-// define for ua return value
-#define NODEIDS_RET_TYPENAME_LENGTH 32
-#define NODEIDS_RET_KEY_LENGTH 32
-#define NODEIDS_RET_DATA_LENGTH 512
-#define NODEIDS_RET_ARRAY_LENGTH 4
+void Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len);
+
+//#define UA_ENABLE_ENCRYPTION true
+//// define for ua config
+//#define NODEIDS_IDENTIFIER_LENGTH 512
+//#define NODEIDS_FIELD_LENGTH 32
+//#define NODEIDS_IDENTIFIERTYPE_LENGTH 32
+//#define NODEIDS_NAMESPACEINDEX_LENGTH 32
+//// define for ua return value
+//#define NODEIDS_RET_TYPENAME_LENGTH 32
+//#define NODEIDS_RET_KEY_LENGTH 32
+//#define NODEIDS_RET_DATA_LENGTH 512
+//#define NODEIDS_RET_ARRAY_LENGTH 4
 
 UA_Boolean running = true;
 char *opcNumeric = "Numeric";
@@ -121,100 +62,6 @@ char *opcOpaque = "Opaque";
 static void stopHandler(int sign) {
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_CLIENT, "Received Ctrl-C");
     running = 0;
-}
-
-Ua_Read_Retval newOPcUaRetval(int len){
-	Ua_Read_Retval urr;
-
-	urr.Usn = malloc(sizeof(char *));
-	memset(urr.Usn, 0, sizeof(char *));
-
-	urr.Usn->arrayLength = malloc(sizeof(int) * len);
-	memset(urr.Usn, 0, sizeof(int) * len);
-
-	urr.Usn->typeName = malloc(sizeof(char *) * len);
-	memset(urr.Usn->typeName, 0, sizeof(char *) * len);
-	urr.Usn->key = malloc(sizeof(char *) * len);
-	memset(urr.Usn->key, 0, sizeof(char *) * len);
-	urr.Usn->data = malloc(sizeof(char *) * len);
-	memset(urr.Usn->data, 0, sizeof(char *) * len);
-
-	for(int i = 0; i < len; i++){
-		urr.Usn->typeName[i] = malloc(sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
-		memset(urr.Usn->typeName[i], 0, sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
-		urr.Usn->key[i] = malloc(sizeof(char) * NODEIDS_RET_KEY_LENGTH);
-		memset(urr.Usn->key[i], 0, sizeof(char) * NODEIDS_RET_KEY_LENGTH);
-		urr.Usn->data[i] = malloc(sizeof(void) * NODEIDS_RET_DATA_LENGTH);
-		memset(urr.Usn->data[i], 0, sizeof(void) * NODEIDS_RET_DATA_LENGTH);
-	}
-	return urr;
-}
-
-Opc_Ua_Config newOpcUaConfig(int len){
-
-	Opc_Ua_Config ouc;
-	ouc.NodeIds = malloc(sizeof(Ua_Node_Id));
-
-	ouc.Security = malloc(sizeof(Ua_Security));
-	//memset(ouc.Security, 0, sizeof(Ua_Security) * len);
-
-	ouc.ChannelConfig = malloc(sizeof(Ua_Channel_Config));
-	//memset(ouc.ChannelConfig, 0, sizeof(Ua_Channel_Config) * len);
-
-	ouc.Config = malloc(sizeof(Ua_Connect_Config));
-	//memset(ouc.Config, 0, sizeof(Ua_Connect_Config) * len);
-
-	ouc.Credenials = malloc(sizeof(Ua_Credenials));
-	//memset(ouc.Credenials, 0, sizeof(Ua_Credenials) * len);
-
-	ouc.NodeIds->Identifier = malloc(sizeof(char*) * len);
-	ouc.NodeIds->Field = malloc(sizeof(char*) * len);
-	ouc.NodeIds->IdentifierType = malloc(sizeof(char*) * len);
-
-	for (int i = 0; i < len; i++) {
-
-		ouc.NodeIds->Identifier[i] = malloc(sizeof(char) * NODEIDS_IDENTIFIER_LENGTH);
-		memset(ouc.NodeIds->Identifier[i], 0, sizeof(char) * NODEIDS_IDENTIFIER_LENGTH);
-
-		ouc.NodeIds->Field[i] = malloc(sizeof(char) * NODEIDS_FIELD_LENGTH);
-		memset(ouc.NodeIds->Field[i], 0, sizeof(char) * NODEIDS_FIELD_LENGTH);
-
-		ouc.NodeIds->IdentifierType[i] = malloc(sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
-		memset(ouc.NodeIds->IdentifierType[i], 0, sizeof(char) * NODEIDS_IDENTIFIERTYPE_LENGTH);
-	}
-	ouc.NodeIds->NamespaceIndex = malloc(sizeof(int) * len);
-	memset(ouc.NodeIds->NamespaceIndex, 0, sizeof(int) * len);
-
-	//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "len: %d", len);
-	//for (int j = 0; j < len; j++){
-	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "identifier: %p", ouc.NodeIds->Identifier[j]);
-	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "field: %p", ouc.NodeIds->Field[j]);
-	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "IdentifierType: %p", ouc.NodeIds->IdentifierType[j]);
-	//	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "NamespaceIndex: %p", &(ouc.NodeIds->NamespaceIndex[j]));
-	//}
-
-	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "newOpcUaConfig Success!!");
-
-	return ouc;
-}
-
-void deleteOpcUaConfig(Opc_Ua_Config ouc, int len1){
-	int len = sizeof(ouc.NodeIds->Identifier);
-	for (int i = 0; i < len; i++) {
-		free(ouc.NodeIds->Identifier[i]);
-		free(ouc.NodeIds->Field[i]);
-		free(ouc.NodeIds->IdentifierType[i]);
-	}
-	free(ouc.NodeIds->NamespaceIndex);
-
-	free(ouc.NodeIds);
-	free(ouc.Security);
-	free(ouc.ChannelConfig);
-	free(ouc.Config);
-	free(ouc.Credenials);
-
-
-	return;
 }
 
 #ifdef UA_ENABLE_ENCRYPTION
@@ -245,18 +92,6 @@ static UA_ByteString loadFile(const char *const path) {
 	return fileContents;
 }
 #endif
-
-void copyStr(char *strDst, char *strSrc) {
-	strcpy(strDst, strSrc);
-	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "copyStr strDst: %s", strDst);
-}
-
-void* galloc(int length){
-	char *pmem;
-	pmem = malloc(length);
-	memset(pmem, 0, length);
-	return pmem;
-}
 
 void
 Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len) {
@@ -341,23 +176,11 @@ Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len) {
 					continue;
 				}
 				if(retval == UA_STATUSCODE_GOOD) {
-					//pRet->Usn->typeName[i] = valueStr->type->typeName;
 					memcpy(pRet.Usn->typeName[i], valueStr->type->typeName, sizeof(char) * NODEIDS_RET_TYPENAME_LENGTH);
-					////pRet->Usn->key[i] = Ua_Config->NodeIds->Field[i];
 					memcpy(pRet.Usn->key[i], Ua_Config->NodeIds->Field[i], sizeof(char) * NODEIDS_RET_KEY_LENGTH);
-					pRet.Usn->arrayLength[i] = valueStr->arrayLength;
-					//memcpy(pRet.Usn->data[i], valueStr->data, sizeof(char) * NODEIDS_RET_DATA_LENGTH);
-					memcpy(pRet.Usn->data[i], valueStr->data, sizeof(valueStr->data));
-
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "sizeof(bool): %ld", sizeof(bool));
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "filed: %s", Ua_Config->NodeIds->Field[i]);
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "pRet.Usn->arrayLength[%d]: %d", i, pRet.Usn->arrayLength[i]);
-					for (int m = 0; m < 8; m++){
-						UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "filed: %d", (bool)(valueStr->data + m * sizeof(bool)));
-					}
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 0));
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 1));
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "data c: %d", (bool)(valueStr->data + 2));
+					pRet.Usn->arrayLength[i] = (int)(valueStr->arrayLength);
+					//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "%p pRet.Usn->arrayLength[%d] = %d", &pRet.Usn->arrayLength[i], i, pRet.Usn->arrayLength[i]);
+					memcpy(pRet.Usn->data[i], valueStr->data, sizeof(char) * NODEIDS_RET_DATA_LENGTH);
 				}
 				UA_Variant_clear(valueStr);
 			}
@@ -386,7 +209,7 @@ Polling(Ua_Read_Retval pRet, Opc_Ua_Config *Ua_Config, int len) {
 		}
 
 		//UA_sleep_ms(1000);
-		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua program loop.");
+		//UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "opcua program loop.");
 		break;
 	};
 
@@ -407,21 +230,15 @@ type OpcPoll struct {
 
 func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	fmt.Println("=============================== cgo opcua polling ===========================")
-	//var pDetectInfo C.UA_Read_Retval
-	////pDetectInfo.data = unsafe.Pointer((*C.void)(C.malloc(dataCacheSize)))
-	////if pDetectInfo.data == nil {
-	////	fmt.Println("go malloc data failed.")
-	////}
-	//pDetectInfo.data = unsafe.Pointer(C.galloc(dataCacheSize))
-	//defer C.free(unsafe.Pointer(pDetectInfo.data))
-////////////////////
-	nodeIdLength := (C.int)(len(opcUaConfig.NodeIds))
-	urr := C.newOPcUaRetval(nodeIdLength)
 
-///////////////////////////////////
+	nodeIdLength := (C.int)(len(opcUaConfig.NodeIds))
+	urr := C.newOpcUaRetval(nodeIdLength)
+	fmt.Println("yaohaiping!!")
+	defer C.deleteOpcUaRetval(urr, (C.int)(len(opcUaConfig.NodeIds)))
+
 	// test trans opc ua config
 	uaConfig := C.newOpcUaConfig(nodeIdLength)
-	//defer C.deleteOpcUaConfig(uaConfig, (C.int)(len(opcUaConfig.NodeIds)))
+	defer C.deleteOpcUaConfig(uaConfig, (C.int)(len(opcUaConfig.NodeIds)))
 
 	i := 0
 	for _, nodeId := range opcUaConfig.NodeIds {
@@ -520,55 +337,23 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 	// call cgo here
 	C.Polling(urr, &uaConfig, nodeIdLength)
 
-	// get cgo return
-	//typeName := C.GoString(urr.Usn[i].typeName)
-	//arrayLength := pDetectInfo.arrayLength
-	//key := C.GoString(pDetectInfo.key)
-
 	addrTypeName := uintptr(unsafe.Pointer(urr.Usn.typeName))
 	addrKey := uintptr(unsafe.Pointer(urr.Usn.key))
 	addrData := uintptr(unsafe.Pointer(urr.Usn.data))
+	addrArrayLength := uintptr(unsafe.Pointer(urr.Usn.arrayLength))
 	for i := 0; i < int(nodeIdLength); i++ {
-		fmt.Println("arrayLength: ", int(*urr.Usn.arrayLength))
+		fmt.Println("arrayLength: ", *(*int32)(unsafe.Pointer(addrArrayLength + uintptr(i * 4))))
 		fmt.Println("addrTypeName: ", C.GoString(*(**C.char)(unsafe.Pointer(addrTypeName + uintptr(i * 8)))))
 		fmt.Println("addrKey: ", C.GoString(*(**C.char)(unsafe.Pointer(addrKey + uintptr(i * 8)))))
-		fmt.Println("addrData: ", *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8))))
+		//fmt.Println("addrData: ", *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8))))
 		pDataAddr := *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8)))
 		for j := 0; j < int(*urr.Usn.arrayLength); j++ {
 			fmt.Println("data bbbb: ", *(*bool)(unsafe.Pointer(uintptr(unsafe.Pointer(pDataAddr)) + uintptr(j))))
 		}
 	}
 
-	//fmt.Println("typeName: ", typeName)
-	//fmt.Println("key: ", key)
-	//fmt.Println("arrayLength: ", arrayLength)
-	//
-	//if arrayLength > uaConfig.ChannelConfig.MaxArrayLength {
-	//	fmt.Println("Get Field(", key, ")'s arrayLength is toolarge:", arrayLength, " maxArrayLength is: ", uaConfig.ChannelConfig.MaxArrayLength)
-	//	return
-	//}
-	//
-	//// loop for arrayLength to convert value.
-	//for i := 0; i < int(arrayLength); i++ {
-	//	fmt.Println("data: ", *(*bool)(unsafe.Pointer(uintptr(pDetectInfo.data) + uintptr(i))))
-	//}
-
 	fmt.Println("end....")
 }
-
-//func galloc(length int) (*C.char) {
-//	pMem := (*C.char)(C.malloc(C.ulong(length)))
-//	if pMem == nil {
-//		fmt.Println("go malloc failed.")
-//	}
-//	return pMem
-//}
-
-//func copyStr(strDst *C.char, strSrc string) {
-//	fmt.Println("strDst:: ", strDst)
-//	fmt.Println("strsrc: ", strSrc)
-//	C.strcpy(strDst, C.CString(strSrc))
-//}
 
 func boolToInt(b bool) int {
 	if b {
