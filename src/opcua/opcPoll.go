@@ -233,7 +233,6 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 
 	nodeIdLength := (C.int)(len(opcUaConfig.NodeIds))
 	urr := C.newOpcUaRetval(nodeIdLength)
-	fmt.Println("yaohaiping!!")
 	defer C.deleteOpcUaRetval(urr, (C.int)(len(opcUaConfig.NodeIds)))
 
 	// test trans opc ua config
@@ -348,7 +347,7 @@ func (p *OpcPoll) PollRead(opcUaConfig OpcUaConfig)(){
 		//fmt.Println("addrData: ", *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8))))
 		pDataAddr := *(**C.bool)(unsafe.Pointer(addrData + uintptr(i * 8)))
 		for j := 0; j < int(*urr.Usn.arrayLength); j++ {
-			fmt.Println("data bbbb: ", *(*bool)(unsafe.Pointer(uintptr(unsafe.Pointer(pDataAddr)) + uintptr(j))))
+			fmt.Println("data : ", *(*bool)(unsafe.Pointer(uintptr(unsafe.Pointer(pDataAddr)) + uintptr(j))))
 		}
 	}
 
