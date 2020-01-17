@@ -1,3 +1,0 @@
-/home/steven/code/c/yao/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/steven/code/c/yao/cmake-build-debug/CMakeFiles/main.dir
-/home/steven/code/c/yao/cmake-build-debug/CMakeFiles/edit_cache.dir
