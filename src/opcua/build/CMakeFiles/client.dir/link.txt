@@ -1,0 +1,1 @@
+/usr/bin/cc    CMakeFiles/client.dir/client.c.o  -o bin/examples/client /usr/local/lib/libopen62541.a -lm -lpthread -lrt 
