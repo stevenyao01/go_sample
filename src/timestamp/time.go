@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"strconv"
+	"time"
 	//"strings"
 	//"github.com/mqtt/utils/log"
 )
@@ -33,10 +33,15 @@ func main() {
 	//fmt.Println(t.UTC().Format(time.UnixDate))
 	//fmt.Println(t.Unix())
 	//
+
+
 	//timestamp := strconv.FormatInt(t.UTC().UnixNano(), 10)
 	//fmt.Println(timestamp)
 	//retStr := subString(timestamp, 0, 13)
+	//
 	//fmt.Println(retStr)
+
+
 	//
 	//var str = "a\nb\nc"
 	//log.Info("str: %s", str)

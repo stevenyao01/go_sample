@@ -23,7 +23,7 @@ func slicebytetostring(b []byte) string {
 	return *(*string)(unsafe.Pointer(&sh))
 }
 
-func main() {
+func main8() {
 	sli:=make([]int ,15)
 	//for i := 0; i<10;i++  {
 	//	sli=append(sli, 1)

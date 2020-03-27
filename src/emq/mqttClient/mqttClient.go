@@ -9,6 +9,21 @@ import (
 	"time"
 )
 
+
+type sub struct {
+	topic    string
+	qos      byte
+	callback mqtt.MessageHandler
+}
+
+const (
+	connectTimeOut     = 10 * time.Second
+	publishTimeOut     = 10 * time.Second
+	subscribeTimeOut   = 10 * time.Second
+	unsubscribeTimeOut = 10 * time.Second
+)
+
+// A struct which can describe mqtt communication.
 type MqttClient struct {
 	// input param
 	broker    string
@@ -26,21 +41,10 @@ type MqttClient struct {
 	isConnected bool
 }
 
-type sub struct {
-	topic    string
-	qos      byte
-	callback mqtt.MessageHandler
-}
-
-const (
-	connectTimeOut     = 10 * time.Second
-	publishTimeOut     = 10 * time.Second
-	subscribeTimeOut   = 10 * time.Second
-	unsubscribeTimeOut = 10 * time.Second
-)
-
+// Define an func for new callback.
 type CbReceive func(topic string, msg mqtt.Message)
 
+// Use it as an interface for other application.
 type Client interface {
 	Init() error
 	UnInit()
@@ -50,19 +54,23 @@ type Client interface {
 	UnReceiveMessage(topic string)
 }
 
-// interface for third application
-/*
 
-*/
+// Interface for third application.
+
+// In this method, we'll configure at first.And then connect to the broker
 func (m *MqttClient) Init() error {
 	m.configure()
-	err := m.connect()
-	if err != nil {
-		return err
+	if m.IsConnected() {
+		err := m.connect()
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
+// When we exit the program, we must call this func to disconnect the broker.
 func (m *MqttClient) UnInit() {
 	err := m.destroy()
 	if err != nil {
@@ -73,6 +81,7 @@ func (m *MqttClient) UnInit() {
 	return
 }
 
+// This method can return true or false. We can use it as a flag of connect status.
 func (m *MqttClient) IsConnected() bool {
 	if m.c == nil {
 		return false
@@ -84,16 +93,19 @@ func (m *MqttClient) IsConnected() bool {
 	return m.isConnected
 }
 
+// Send special data to the special topic with the special qos.
 func (m *MqttClient) SendMessage(topic string, qos byte, data []byte) (n int, err error) {
 	return m.publish(topic, qos, false, data)
 }
 
+// Receive message from the special topic.
 func (m *MqttClient) ReceiveMessage(topic string, qos byte, callback CbReceive) error {
 	return m.receiveMessage(topic, qos, func(i mqtt.Client, message mqtt.Message) {
 		callback(topic, message)
 	})
 }
 
+// UnSubscribe the special topic.
 func (m *MqttClient) UnReceiveMessage(topic string) {
 	m.unSubscribe(topic)
 	return
@@ -101,13 +113,13 @@ func (m *MqttClient) UnReceiveMessage(topic string) {
 
 // nation method
 func (m *MqttClient) receiveMessage(topic string, qos byte, callback mqtt.MessageHandler) error {
-	return m.subscribe(topic, qos, nil) //callback)
+	return m.subscribe(topic, qos, callback)
 }
 
 //set callback function
 //var callBack mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-//	fmt.Printf("yhp TOPIC: %s\n", msg.Topic())
-//	fmt.Printf("yhp MSG: %s\n", msg.Payload())
+//	fmt.Printf("TOPIC: %s\n", msg.Topic())
+//	fmt.Printf("MSG: %s\n", msg.Payload())
 //}
 
 func newTLSConfigSingle(filename string) (*tls.Config, error) {
