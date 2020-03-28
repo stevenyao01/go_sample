@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+
 var jenkinsUrl = flag.String("url", "http://10.110.180.231:8080/jenkins", "jenkins url.")
 var jenkinsJob = flag.String("job", "LeapEdge.agentSign", "jenkins job.")
 var localPath = flag.String("local", "agentSign", "download path.")
@@ -42,29 +43,43 @@ func saveToFile(msg []byte, fileName string) error {
 	return nil
 }
 
-func downloadCallback (length int64, len int64)() {
+func downloadCallback(length int64, len int64) () {
 	fmt.Println("int: ", length, " len: ", len)
 }
 
+func stopProcess(p *os.Process) {
+	time.Sleep(20 * time.Second)
+	errKill := p.Kill()
+	if errKill != nil {
+		log.Println("errKill: ", errKill.Error())
+	}
+	log.Println("kill the test process.")
+	return
+}
 
-//func main() {
-//	m := email.NewMessage("Hi", "this is a test")
-//	m.From.Address = "leapiot@126.com"
-//	m.To = []string{"yaohp1@lenovo.com", "leapiot@126.com"}
-//	err := m.Attach("mail.go")
-//	if err != nil {
-//		log.Println(err)
-//	}
-//	err = email.Send("smtp.126.com:25", smtp.PlainAuth("", "leapiot@126.com", "IESSAVSGWFXNPQMO", "smtp.126.com"), m)
-//	if err != nil {
-//		log.Println("err: ", err.Error())
-//	}
-//}
+func readStderr(path string, read, write *os.File) {
+	defer read.Close()
+	defer write.Close()
+	var buf = make([]byte, 4*4096)
+	for {
+		n, err := read.Read(buf)
+		if err != nil {
+			log.Println("stderr read error: %s", err.Error())
+			return
+		}
+		errSaveToFile := saveToFile(buf[:n], path+"agent.log")
+		if errSaveToFile != nil {
+			log.Println("errSaveToFile: ", errSaveToFile.Error())
+		}
+	}
+}
+
+func main1() {
+
+}
 
 func main() {
 	flag.Parse()
-
-
 
 	//result := make(map[string]string)
 	//result["linuxarm32"] = "PASS"
@@ -175,7 +190,26 @@ func main() {
 			} else {
 				if strings.Contains(file.Name(), "EdgeAgent_") {
 					fmt.Println("file: ", file.Name())
-					// todo add exec right, start, get output
+					// get agent, add exec right, start it.
+					files, err := ioutil.ReadDir(unZipDir) //读取目录下文件
+					if err != nil {
+						return
+					}
+					for _, file := range files {
+						if file.IsDir() {
+							continue
+						} else {
+							if strings.Contains(file.Name(), "EdgeAgent_") {
+								fmt.Println("file: ", file.Name())
+
+								errAgent := startAgent(unZipDir, file)
+								if errAgent != nil {
+									log.Println("errAgent: ", errAgent.Error())
+								}
+								return
+							}
+						}
+					}
 				}
 			}
 		}
@@ -186,6 +220,44 @@ func main() {
 	//if errSendMail != nil {
 	//	log.Println("errSendMail: ", errSendMail.Error())
 	//}
+}
+
+func startAgent(unZipDir string, file os.FileInfo) error {
+	// add exec right
+	errChmod := os.Chmod(unZipDir+file.Name(), 0755)
+	if errChmod != nil {
+		fmt.Println("errChmod: ", errChmod.Error())
+	}
+	// start
+	read, write, err := os.Pipe()
+	if err != nil {
+		fmt.Println("err: ", err.Error())
+		return err
+	}
+	attr := &os.ProcAttr{
+		Files: []*os.File{os.Stdin, write, write},
+	}
+	//p, err := os.StartProcess(binary, []string{binary, "-c", local, "-d", inout, "-o", other}, attr)
+	binary := unZipDir + file.Name()
+	pro, err := os.StartProcess(binary, []string{binary}, attr)
+	if err != nil {
+		if err := read.Close(); err != nil {
+			log.Println("close pipe read error:", err.Error())
+		}
+		if err := write.Close(); err != nil {
+			log.Println("close pipe write error:", err.Error())
+		}
+		return err
+	}
+	go readStderr(unZipDir, read, write)
+	go stopProcess(pro)
+	ps, errWait := pro.Wait()
+	if errWait != nil {
+		log.Println("wait worker error:%s", err.Error())
+		return errWait
+	}
+	log.Println("ps: ", ps.String())
+	return nil
 }
 
 func sendMailToMonitor(msg string) error {
@@ -276,7 +348,7 @@ func rebuildJob(err error, jenkins *gojenkins.Jenkins, job gojenkins.Job, build 
 
 func getSk(dir string) error {
 	strArr := strings.Split(*broker, ":")
-	errDownload := downloadFile("http://"+strArr[0]+":8080/services/certificate/download?uid=1", dir + "/device.sk", downloadCallback)
+	errDownload := downloadFile("http://"+strArr[0]+":8080/services/certificate/download?uid=1", dir+"/device.sk", downloadCallback)
 	if errDownload != nil {
 		fmt.Println("errDownload: ", errDownload.Error())
 		return errDownload
@@ -285,33 +357,34 @@ func getSk(dir string) error {
 }
 
 var DEPTH = 5
-func walkDir(dirpath string, depth int){
-	if depth > DEPTH{//大于设定的深度
+
+func walkDir(dirpath string, depth int) {
+	if depth > DEPTH { //大于设定的深度
 		return
 	}
-	files, err := ioutil.ReadDir(dirpath)//读取目录下文件
-	if err != nil{
+	files, err := ioutil.ReadDir(dirpath) //读取目录下文件
+	if err != nil {
 		return
 	}
-	for _, file := range files{
-		if file.IsDir(){
-			walkDir(dirpath + "/" + file.Name(), depth+1)
+	for _, file := range files {
+		if file.IsDir() {
+			walkDir(dirpath+"/"+file.Name(), depth+1)
 			continue
-		}else{
+		} else {
 			fmt.Println("file: ", file.Name())
 		}
 	}
 }
 
-func walkDirOne(dirpath string){
-	files, err := ioutil.ReadDir(dirpath)//读取目录下文件
-	if err != nil{
+func walkDirOne(dirpath string) {
+	files, err := ioutil.ReadDir(dirpath) //读取目录下文件
+	if err != nil {
 		return
 	}
-	for _, file := range files{
-		if file.IsDir(){
+	for _, file := range files {
+		if file.IsDir() {
 			continue
-		}else{
+		} else {
 			fmt.Println("file: ", file.Name())
 		}
 	}
