@@ -40,7 +40,7 @@ func (a *agent) startWorker() error {
 		return err
 	}
 	go utils.ReadStderr(a.agentDir, read, write)
-	go utils.StopProcess(pro)
+	go utils.StopProcess(pro, a.runtime)
 	ps, errWait := pro.Wait()
 	if errWait != nil {
 		log.Println("wait worker error: ", errWait.Error())

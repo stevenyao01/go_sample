@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/jordan-wright/email"
 	"html/template"
 	"net/smtp"
@@ -12,9 +13,10 @@ type mail struct {
 	from string
 	to   []string
 	sub  string
+	att  []string
 }
 
-func (m *mail)SendMail(msg string) error {
+func (m *mail) SendMail(msg string) error {
 	// NewEmail返回一个email结构体的指针
 	e := email.NewEmail()
 	// 发件人
@@ -46,17 +48,30 @@ func (m *mail)SendMail(msg string) error {
 	// html形式的消息
 	e.HTML = body.Bytes()
 	// 从缓冲中将内容作为附件到邮件中
-	_, _ = e.Attach(body, "email-template.html", "text/html")
+	//_, _ = e.Attach(body, "email-template.html", "text/html")
 	// 以路径将文件作为附件添加到邮件中
-	_, _ = e.AttachFile("/home/steven/go/src/github.com/go_sample/src/autotest/mail.go")
+	for _, v := range m.att{
+		if v != "" {
+			_, errAttachFile := e.AttachFile(v)
+			if errAttachFile != nil {
+				fmt.Println("errAttachFile: ", errAttachFile.Error())
+			}
+		}
+	}
+	//_, errAttachFile := e.AttachFile("/home/steven/code/go/src/github.com/go_sample/src/autosmoke/agentSign/EdgeAgentlinux64/EdgeAgentlinux64.log")
+	//if errAttachFile != nil {
+	//	fmt.Println("errAttachFile: ", errAttachFile.Error())
+	//}
+
 	// 发送邮件(如果使用QQ邮箱发送邮件的话，passwd不是邮箱密码而是授权码)
 	return e.Send("smtp.126.com:25", smtp.PlainAuth("", "leapiot@126.com", "IESSAVSGWFXNPQMO", "smtp.126.com"))
 }
 
-func MailNew(f string, t []string, s string) (*mail, error) {
+func MailNew(f string, t []string, s string, at []string) (*mail, error) {
 	return &mail{
 		from: f,
 		to:   t,
 		sub:  s,
+		att:  at,
 	}, nil
 }

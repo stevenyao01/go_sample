@@ -224,7 +224,7 @@ func main() {
 
 func startAgent(unZipDir string, file os.FileInfo) error {
 	// add exec right
-	errChmod := os.Chmod(unZipDir+file.Name(), 0755)
+	errChmod := os.Chmod(unZipDir+"/"+file.Name(), 0755)
 	if errChmod != nil {
 		fmt.Println("errChmod: ", errChmod.Error())
 	}

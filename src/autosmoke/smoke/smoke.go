@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/go_sample/src/autosmoke/utils"
@@ -19,11 +20,13 @@ type smoke struct {
 	pwdStr         string
 	brokerStr      string
 	buildNumberStr string
+	runtime        string
 	skStr          string
 	jk             *jenkins
 	ag             *agent
 	config         *config
 	ml             *mail
+	result         map[string]string
 }
 
 func (s *smoke) Start() error {
@@ -41,10 +44,30 @@ func (s *smoke) Start() error {
 		return errProcess
 	}
 
+	attachFile := make([]string,100,100)
+	var content bytes.Buffer
+	i := 0
+	for k, v := range s.result{
+		content.WriteString(k + " : " + v + "\n")
+		target := strings.Split(k, "_")
+		atStr := target[0] + target[1] + target[2]
+		attachFile[i] = s.localPathStr + "/" + atStr + "/" + atStr + ".log"
+		i++
+	}
+	fmt.Println("content: ", content.String())
+	errSendMailToMonitor := s.sendMailToMonitor(content.String(), attachFile)
+	if errSendMailToMonitor != nil {
+		fmt.Println("errSendMailToMonitor: ", errSendMailToMonitor.Error())
+		return errSendMailToMonitor
+	}
+	fmt.Println("所有平台测试完毕，请查收邮件结果。")
+
 	return nil
 }
 
 func (s *smoke) process(build gojenkins.Build) error {
+	totalCount := 0
+	passCount := 0
 	for _, v := range build.Artifacts {
 		errGetArtifact := s.getArtifact(v)
 		if errGetArtifact != nil {
@@ -64,12 +87,14 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 		unZipPath := dirArr[0] + dirArr[1] + dirArr[2]
 		unZipDir := s.localPathStr + "/" + unZipPath
+		fmt.Println("为您下载: ", dirArr[0], "(os:", dirArr[1], ", arch:", dirArr[2], ") 到您的", unZipPath, "目录下。")
 		errUnZip := utils.UnzipFile(s.localPathStr+"/"+v.FileName, unZipDir)
 		if errUnZip != nil {
 			fmt.Println("unzip file err: ", errUnZip)
 			return errUnZip
 		}
 		// modfiy broker in mqtt config
+		fmt.Println("配置您的broker到您: ", unZipDir, " 目录下的mqtt.conf文件中。")
 		config, errConfigNew := ConfigNew(s.brokerStr, unZipDir)
 		if errConfigNew != nil {
 			fmt.Println("errConfigNew: ", errConfigNew.Error())
@@ -81,6 +106,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 
 		// get broker sk file
+		fmt.Println("获取您的broker上的device.sk文件到您: ", unZipDir, " 目录下。")
 		errSk := utils.GetSk(s.brokerStr, unZipDir)
 		if errSk != nil {
 			fmt.Println("errSk: ", errSk.Error())
@@ -102,20 +128,63 @@ func (s *smoke) process(build gojenkins.Build) error {
 			if file.IsDir() {
 				continue
 			} else {
-				if strings.Contains(file.Name(), "EdgeAgent_") {
-					errProcessAgent := s.processAgent(file, unZipDir)
-					if errProcessAgent != nil {
-						return errProcessAgent
+				if s.jobStr == "LeapEdge.agentSign" {
+					if strings.Contains(file.Name(), "EdgeAgent_") {
+						if strings.Contains(file.Name(), "windows") {
+							fmt.Println("暂时不支持windows，待续。。。")
+							continue
+						}
+						errProcessAgent := s.processAgent(file, unZipDir)
+						if errProcessAgent != nil {
+							return errProcessAgent
+						}
 					}
-				} else {
-					errProcessWorker := s.processWorker(file, unZipDir)
-					if errProcessWorker != nil {
-						return errProcessWorker
+				} else if s.jobStr == "LeapEdge.workerSign" { // TODO process worker
+					if strings.Contains(file.Name(), "EdgeAgent_") {
+						errProcessAgent := s.processWorker(file, unZipDir)
+						if errProcessAgent != nil {
+							return errProcessAgent
+						}
+					} else {
+						errProcessWorker := s.processWorker(file, unZipDir)
+						if errProcessWorker != nil {
+							return errProcessWorker
+						}
 					}
 				}
+
 			}
 		}
+		fmt.Println(dirArr[0], " (os:", dirArr[1]+", arch:"+dirArr[2], ") 处理完毕.")
+		fmt.Println("")
+		if dirArr[1] != "windows" {
+			data, err := ioutil.ReadFile(unZipDir + "/" + unZipPath + ".log")
+			if err != nil {
+				return err
+			}
+			if strings.Contains(string(data), "heartbeat") {
+				fmt.Println("PASS	可以正常上报心跳。")
+				s.result[fileArr[0]] = "PASS"
+				passCount += 1
+			} else {
+				fmt.Println("FAIL	未能正常上报心跳。")
+				s.result[fileArr[0]] = "FAIL"
+			}
+		} else {
+			errSaveToFile := utils.SaveToFile([]byte("windows程序无法在ubuntu上运行!!!!"), unZipDir+"/"+unZipPath+".log")
+			if errSaveToFile != nil {
+				fmt.Println("errSaveToFile: ", errSaveToFile.Error())
+			}
+			fmt.Println("FAIL	不能在此平台运行。")
+			s.result[fileArr[0]] = "FAIL"
+		}
+		totalCount += 1
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
 	}
+	fmt.Println("totalCount: ", totalCount, " passCount: ", passCount)
+
 	return nil
 }
 
@@ -134,7 +203,7 @@ func (s *smoke) getArtifact(v gojenkins.Artifact) error {
 }
 
 func (s *smoke) processAgent(file os.FileInfo, unZipDir string) error {
-	fmt.Println("file: ", file.Name())
+	fmt.Println("为您运行您的程序: ", file.Name(), " 并在"+s.runtime+"秒后结束其运行。")
 	// get agent, add exec right, start it.
 	files, errReadFile := ioutil.ReadDir(unZipDir)
 	//读取目录下文件
@@ -146,9 +215,8 @@ func (s *smoke) processAgent(file os.FileInfo, unZipDir string) error {
 			continue
 		} else {
 			if strings.Contains(file.Name(), "EdgeAgent_") {
-				fmt.Println("file: ", file.Name())
 				var errAgentNew error
-				s.ag, errAgentNew = AgentNew(unZipDir, file)
+				s.ag, errAgentNew = AgentNew(unZipDir, file, s.runtime)
 				if errAgentNew != nil {
 					fmt.Println("errAgentNew: ", errAgentNew.Error())
 					return errAgentNew
@@ -197,12 +265,12 @@ func (s *smoke) processWorker(file os.FileInfo, unZipDir string) error {
 	return nil
 }
 
-func (s *smoke) sendMailToMonitor(msg string) error {
+func (s *smoke) sendMailToMonitor(msg string, att []string) error {
 	fromUser := "leapiot@126.com"
 	toUser := []string{"yaohp1@lenovo.com", "leapiot@126.com"}
 	subject := "LeapIot Smoke Test"
 	var errMail error
-	s.ml, errMail = MailNew(fromUser, toUser, subject)
+	s.ml, errMail = MailNew(fromUser, toUser, subject, att)
 	if errMail != nil {
 		fmt.Println("errMail: ", errMail.Error())
 		return errMail
@@ -228,8 +296,8 @@ func (s *smoke) prepareJenkins() error {
 		fmt.Println("errLastSuccessfulBuild: ", errLastSuccessfulBuild.Error())
 		return errLastSuccessfulBuild
 	}
-	fmt.Println("lastBuild / lastSuccessBuild : ", lastBuild.Id, "/", build.Id)
-	fmt.Println("Download last success build: ", build.Url)
+	fmt.Println("最新的Build / 最新的成功的Build : <", lastBuild.Id, "/", build.Id, ">")
+
 	if s.buildNumberStr != "0" {
 		var errSpecial error
 		build, errSpecial = s.jk.getSpecialBuild()
@@ -237,8 +305,12 @@ func (s *smoke) prepareJenkins() error {
 			fmt.Println("errSpecial: ", errSpecial.Error())
 			return errSpecial
 		}
-		fmt.Println("use special version: ", build.Id)
+		fmt.Println("为您使用您指定的build: ", build.Id)
+	} else {
+		fmt.Println("为您使用最新的成功的Build: ", build.Url)
 	}
+
+	fmt.Println("")
 
 	s.jk.setCurrentBuild(build)
 
@@ -262,7 +334,7 @@ func (s *smoke) prepareJenkins() error {
 	return nil
 }
 
-func New(ur string, j string, l string, us string, p string, br string, bn string, sk string) (*smoke, error) {
+func New(ur string, j string, l string, us string, p string, br string, bn string, sk string, rt string) (*smoke, error) {
 	return &smoke{
 		urlStr:         ur,
 		jobStr:         j,
@@ -272,5 +344,7 @@ func New(ur string, j string, l string, us string, p string, br string, bn strin
 		brokerStr:      br,
 		buildNumberStr: bn,
 		skStr:          sk,
+		runtime:        rt,
+		result:         make(map[string]string),
 	}, nil
 }

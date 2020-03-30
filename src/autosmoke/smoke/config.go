@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 )
 
@@ -16,8 +15,8 @@ type config struct {
 }
 
 func (c *config) loadConfigFile(name string) (map[string]string, error) {
-	dir, _ := os.Getwd()
-	fmt.Println("dir: ", dir)
+	//dir, _ := os.Getwd()
+	//fmt.Println("dir: ", dir)
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
 		return nil, err

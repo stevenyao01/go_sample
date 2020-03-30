@@ -28,7 +28,7 @@ func GetSk(broker string, dir string) error {
 func UnzipFile(zipFileName string, targetPath string) error {
 	// judge zip file
 	if lIsZip(zipFileName) {
-		fmt.Println("the target is zip file.")
+		//fmt.Println("the target is zip file.")
 	} else {
 		fmt.Println("the target is not zip file.")
 		return errors.New("input file is not zip file")
@@ -37,10 +37,9 @@ func UnzipFile(zipFileName string, targetPath string) error {
 	errUnZip := lUnZip(zipFileName, targetPath)
 	if errUnZip != nil {
 		fmt.Println("errUnZip: ", errUnZip)
-	} else {
-		fmt.Println("UnZip file success.")
+		return errUnZip
 	}
-	return errUnZip
+	return nil
 }
 
 func SaveToFile(msg []byte, fileName string) error {
@@ -62,7 +61,9 @@ func SaveToFile(msg []byte, fileName string) error {
 }
 
 func downloadCallback(length int64, len int64) () {
-	fmt.Println("int: ", length, " len: ", len)
+	//fmt.Println("下载的device.sk的文件大小: ", len)
+	//fmt.Println("int: ", length, " len: ", len)
+	return
 }
 
 func CopyFile(dstName, srcName string) (written int64, err error) {
@@ -79,8 +80,12 @@ func CopyFile(dstName, srcName string) (written int64, err error) {
 	return io.Copy(dst, src)
 }
 
-func StopProcess(p *os.Process) {
-	time.Sleep(20 * time.Second)
+func StopProcess(p *os.Process, rt string) {
+	runTime, errStr := strconv.Atoi(rt)
+	if errStr != nil {
+		fmt.Println("string to int error: ", errStr.Error())
+	}
+	time.Sleep(time.Duration(runTime) * time.Second)
 	errKill := p.Kill()
 	if errKill != nil {
 		log.Println("errKill: ", errKill.Error())
@@ -99,7 +104,8 @@ func ReadStderr(path string, read, write *os.File) {
 			log.Println("stderr read error: %s", err.Error())
 			return
 		}
-		errSaveToFile := SaveToFile(buf[:n], path+"agent.log")
+		logArr := strings.Split(path, "/")
+		errSaveToFile := SaveToFile(buf[:n], path+"/"+ logArr[1]+".log")
 		if errSaveToFile != nil {
 			log.Println("errSaveToFile: ", errSaveToFile.Error())
 		}
@@ -147,7 +153,7 @@ func downloadFile(url string, localPath string, fb func(length, downLen int64)) 
 		written int64
 	)
 	tmpFilePath := localPath + ".download"
-	fmt.Println(tmpFilePath)
+	//fmt.Println(tmpFilePath)
 	//创建一个http client
 	client := new(http.Client)
 	//client.Timeout = time.Second * 60 //设置超时时间

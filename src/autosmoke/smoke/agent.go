@@ -9,15 +9,29 @@ import (
 
 type agent struct {
 	agentDir   string
+	runtime    string
 	binaryFile os.FileInfo
 }
 
 func (a *agent) startAgent() error {
 	// add exec right
-	errChmod := os.Chmod(a.agentDir + a.binaryFile.Name(), 0755)
+	currenDir, errGetPwd := os.Getwd()
+	if errGetPwd != nil {
+		fmt.Println("errGetwd: ", errGetPwd.Error())
+		return errGetPwd
+	}
+
+	errChdir := os.Chdir(a.agentDir)
+	if errChdir != nil {
+		fmt.Println("errChdir: ", errChdir.Error())
+		return errChdir
+	}
+	errChmod := os.Chmod(a.binaryFile.Name(), 0755)
 	if errChmod != nil {
 		fmt.Println("errChmod: ", errChmod.Error())
+		return errChmod
 	}
+
 	// start
 	read, write, err := os.Pipe()
 	if err != nil {
@@ -28,7 +42,7 @@ func (a *agent) startAgent() error {
 		Files: []*os.File{os.Stdin, write, write},
 	}
 	//p, err := os.StartProcess(binary, []string{binary, "-c", local, "-d", inout, "-o", other}, attr)
-	binary := a.agentDir + a.binaryFile.Name()
+	binary := a.binaryFile.Name()
 	pro, err := os.StartProcess(binary, []string{binary}, attr)
 	if err != nil {
 		if err := read.Close(); err != nil {
@@ -39,20 +53,26 @@ func (a *agent) startAgent() error {
 		}
 		return err
 	}
+	errRetChdir := os.Chdir(currenDir)
+	if errRetChdir != nil {
+		fmt.Println("errChdir: ", errRetChdir.Error())
+		return errRetChdir
+	}
 	go utils.ReadStderr(a.agentDir, read, write)
-	go utils.StopProcess(pro)
+	go utils.StopProcess(pro, a.runtime)
 	ps, errWait := pro.Wait()
 	if errWait != nil {
 		log.Println("wait worker error: ", errWait.Error())
 		return errWait
 	}
-	log.Println("ps: ", ps.String())
+	log.Println("wait到信号: ", ps.String())
 	return nil
 }
 
-func AgentNew(dir string, f os.FileInfo) (*agent, error) {
+func AgentNew(dir string, f os.FileInfo, rt string) (*agent, error) {
 	return &agent{
 		agentDir:   dir,
+		runtime:    rt,
 		binaryFile: f,
 	}, nil
 }
