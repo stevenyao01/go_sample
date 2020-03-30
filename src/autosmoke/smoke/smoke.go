@@ -130,10 +130,10 @@ func (s *smoke) process(build gojenkins.Build) error {
 			} else {
 				if s.jobStr == "LeapEdge.agentSign" {
 					if strings.Contains(file.Name(), "EdgeAgent_") {
-						if strings.Contains(file.Name(), "windows") {
-							fmt.Println("暂时不支持windows，待续。。。")
-							continue
-						}
+						//if strings.Contains(file.Name(), "windows") {
+						//	fmt.Println("暂时不支持windows，待续。。。")
+						//	continue
+						//}
 						errProcessAgent := s.processAgent(file, unZipDir)
 						if errProcessAgent != nil {
 							return errProcessAgent
@@ -157,7 +157,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 		fmt.Println(dirArr[0], " (os:", dirArr[1]+", arch:"+dirArr[2], ") 处理完毕.")
 		fmt.Println("")
-		if dirArr[1] != "windows" {
+		//if dirArr[1] != "windows" {
 			data, err := ioutil.ReadFile(unZipDir + "/" + unZipPath + ".log")
 			if err != nil {
 				return err
@@ -170,14 +170,14 @@ func (s *smoke) process(build gojenkins.Build) error {
 				fmt.Println("FAIL	未能正常上报心跳。")
 				s.result[fileArr[0]] = "FAIL"
 			}
-		} else {
-			errSaveToFile := utils.SaveToFile([]byte("windows程序无法在ubuntu上运行!!!!"), unZipDir+"/"+unZipPath+".log")
-			if errSaveToFile != nil {
-				fmt.Println("errSaveToFile: ", errSaveToFile.Error())
-			}
-			fmt.Println("FAIL	不能在此平台运行。")
-			s.result[fileArr[0]] = "FAIL"
-		}
+		//} else {
+		//	errSaveToFile := utils.SaveToFile([]byte("windows程序无法在ubuntu上运行!!!!"), unZipDir+"/"+unZipPath+".log")
+		//	if errSaveToFile != nil {
+		//		fmt.Println("errSaveToFile: ", errSaveToFile.Error())
+		//	}
+		//	fmt.Println("FAIL	不能在此平台运行。")
+		//	s.result[fileArr[0]] = "FAIL"
+		//}
 		totalCount += 1
 		fmt.Println("")
 		fmt.Println("")
