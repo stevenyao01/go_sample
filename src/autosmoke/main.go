@@ -15,10 +15,10 @@ var jenkinsJob = flag.String("job", "LeapEdge.agentSign", "jenkins job.")
 var localPath = flag.String("local", "agentSign", "download path.")
 var user = flag.String("user", "yaohp1", "user name.")
 var pwd = flag.String("pwd", "xxxxxx", "password.")
-var broker = flag.String("broker", "172.17.170.163:4567", "mqtt server address.")
+var broker = flag.String("broker", "172.17.203.36:4567", "mqtt server address.")
 var buildNumber = flag.String("build", "0", "special build number.")
 var sk = flag.String("sk", "", "device.sk")
-var runTime = flag.String("runtime", "60", "program run time.")
+var runTime = flag.String("runtime", "20", "program run time.")
 
 func main() {
 	//defer func(){

@@ -105,7 +105,7 @@ func ReadStderr(path string, read, write *os.File) {
 			return
 		}
 		logArr := strings.Split(path, "/")
-		errSaveToFile := SaveToFile(buf[:n], path+"/"+ logArr[1]+".log")
+		errSaveToFile := SaveToFile(buf[:n], path+"/"+ logArr[1]+logArr[2]+".log")
 		if errSaveToFile != nil {
 			log.Println("errSaveToFile: ", errSaveToFile.Error())
 		}

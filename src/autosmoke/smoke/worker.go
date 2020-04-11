@@ -5,19 +5,47 @@ import (
 	"github.com/go_sample/src/autosmoke/utils"
 	"log"
 	"os"
+	"strings"
 )
 
 type worker struct {
-	agentDir   string
+	workerDir  string
+	runtime    string
 	binaryFile os.FileInfo
 }
 
-func (a *agent) startWorker() error {
+func (w *worker) startWorker() error {
 	// add exec right
-	errChmod := os.Chmod(a.agentDir + a.binaryFile.Name(), 0755)
+	currenDir, errGetPwd := os.Getwd()
+	if errGetPwd != nil {
+		fmt.Println("errGetwd: ", errGetPwd.Error())
+		return errGetPwd
+	}
+	bina := strings.Split(w.workerDir, "/")
+	_, errIn := utils.CopyFile(w.workerDir + "/input.conf", "config/"+bina[1]+"/input.conf", )
+	if errIn != nil {
+		fmt.Println("copy input.conf err in worker: ", bina[1], " arch: ", bina[2])
+	}
+	_, errOut := utils.CopyFile(w.workerDir + "/output.conf", "config/"+bina[1]+"/output.conf")
+	if errOut != nil {
+		fmt.Println("copy output.conf err in worker: ", bina[1], " arch: ", bina[2])
+	}
+	_, errOther := utils.CopyFile(w.workerDir + "/other.conf", "config/"+bina[1]+"/other.conf")
+	if errOther != nil {
+		fmt.Println("copy other.conf err in worker: ", bina[1], " arch: ", bina[2])
+	}
+
+	errChdir := os.Chdir(w.workerDir)
+	if errChdir != nil {
+		fmt.Println("errChdir: ", errChdir.Error())
+		return errChdir
+	}
+	errChmod := os.Chmod(w.binaryFile.Name(), 0755)
 	if errChmod != nil {
 		fmt.Println("errChmod: ", errChmod.Error())
+		return errChmod
 	}
+
 	// start
 	read, write, err := os.Pipe()
 	if err != nil {
@@ -28,9 +56,17 @@ func (a *agent) startWorker() error {
 		Files: []*os.File{os.Stdin, write, write},
 	}
 	//p, err := os.StartProcess(binary, []string{binary, "-c", local, "-d", inout, "-o", other}, attr)
-	binary := a.agentDir + a.binaryFile.Name()
-	pro, err := os.StartProcess(binary, []string{binary}, attr)
-	if err != nil {
+	binary := w.binaryFile.Name()
+	var pro *os.Process
+	var errStart error
+	if strings.Contains(w.workerDir, "windows") {
+		//pro, errStart = os.StartProcess("/usr/bin/wine", []string{"wine", binary}, attr)
+		pro, errStart = os.StartProcess("/usr/bin/wine", []string{"wine", "./" + binary, "-c", "input.conf", "-d", "output.conf", "-o", "other.conf", "-debug"}, attr)
+	} else {
+		//pro, errStart = os.StartProcess(binary, []string{binary}, attr)
+		pro, errStart = os.StartProcess(binary, []string{binary, "-c", "input.conf", "-d", "output.conf", "-o", "other.conf", "-debug"}, attr)
+	}
+	if errStart != nil {
 		if err := read.Close(); err != nil {
 			log.Println("close pipe read error:", err.Error())
 		}
@@ -39,20 +75,27 @@ func (a *agent) startWorker() error {
 		}
 		return err
 	}
-	go utils.ReadStderr(a.agentDir, read, write)
-	go utils.StopProcess(pro, a.runtime)
+	errRetChdir := os.Chdir(currenDir)
+	if errRetChdir != nil {
+		fmt.Println("errChdir: ", errRetChdir.Error())
+		return errRetChdir
+	}
+
+	go utils.ReadStderr(w.workerDir, read, write)
+	go utils.StopProcess(pro, w.runtime)
 	ps, errWait := pro.Wait()
 	if errWait != nil {
 		log.Println("wait worker error: ", errWait.Error())
 		return errWait
 	}
-	log.Println("ps: ", ps.String())
+	log.Println("wait到信号: ", ps.String())
 	return nil
 }
 
-func WorkerNew(dir string, f os.FileInfo) (*agent, error) {
-	return &agent{
-		agentDir:   dir,
+func WorkerNew(dir string, f os.FileInfo, rt string) (*worker, error) {
+	return &worker{
+		workerDir:  dir,
+		runtime:    rt,
 		binaryFile: f,
 	}, nil
 }
