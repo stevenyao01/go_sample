@@ -61,7 +61,12 @@ func (s *smoke) Start() error {
 		fmt.Println("errSendMailToMonitor: ", errSendMailToMonitor.Error())
 		return errSendMailToMonitor
 	}
-	fmt.Println("所有平台测试完毕，请查收邮件结果。")
+	if strings.Compare(s.jobStr, "LeapEdge.agentSign") == 0 {
+		fmt.Println("所有平台测试完毕，请查收邮件结果。")
+	} else {
+		fmt.Println("(linux, amd64)平台测试完毕，请查收邮件结果。")
+	}
+
 
 	return nil
 }
@@ -88,7 +93,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 		unZipPath := dirArr[0] + "/" + dirArr[1] + dirArr[2]
 		unZipDir := s.localPathStr + "/" + unZipPath
-		fmt.Println("为您下载: ", dirArr[0], "(os:", dirArr[1], ", arch:", dirArr[2], ") 到您的", unZipPath, "目录下。")
+		// fmt.Println("为您下载: ", dirArr[0], "(os:", dirArr[1], ", arch:", dirArr[2], ") 到您的", unZipPath, "目录下。")
 		if strings.Contains(v.FileName, "modbus_linux_amd64") ||
 			strings.Contains(v.FileName, "opcua_linux_amd64") ||
 			strings.Contains(v.FileName, "opcda_linux_amd64") ||
@@ -98,18 +103,18 @@ func (s *smoke) process(build gojenkins.Build) error {
 			strings.Contains(v.FileName, "iec104_linux_amd64") ||
 			strings.Contains(v.FileName, "fins_linux_amd64") ||
 			strings.Contains(v.FileName, "mewtocol_linux_amd64") ||
-			strings.Contains(v.FileName, "filebeat_linux_amd64") ||
-			strings.Contains(v.FileName, "modbus_linux_amd32") ||
-			strings.Contains(v.FileName, "opcua_linux_amd32") ||
-			strings.Contains(v.FileName, "opcda_linux_amd32") ||
-			strings.Contains(v.FileName, "profinet_linux_amd32") ||
-			strings.Contains(v.FileName, "bacnet_linux_amd32") ||
-			strings.Contains(v.FileName, "melsec_linux_amd32") ||
-			strings.Contains(v.FileName, "iec104_linux_amd32") ||
-			strings.Contains(v.FileName, "fins_linux_amd32") ||
-			strings.Contains(v.FileName, "mewtocol_linux_amd32") ||
-			strings.Contains(v.FileName, "filebeat_linux_amd32") ||
-			strings.Contains(v.FileName, "EdgeAgent_") {
+			strings.Contains(v.FileName, "filebeat_linux_amd64") {
+			//|| strings.Contains(v.FileName, "modbus_linux_amd32") ||
+			//strings.Contains(v.FileName, "opcua_linux_amd32") ||
+			//strings.Contains(v.FileName, "opcda_linux_amd32") ||
+			//strings.Contains(v.FileName, "profinet_linux_amd32") ||
+			//strings.Contains(v.FileName, "bacnet_linux_amd32") ||
+			//strings.Contains(v.FileName, "melsec_linux_amd32") ||
+			//strings.Contains(v.FileName, "iec104_linux_amd32") ||
+			//strings.Contains(v.FileName, "fins_linux_amd32") ||
+			//strings.Contains(v.FileName, "mewtocol_linux_amd32") ||
+			//strings.Contains(v.FileName, "filebeat_linux_amd32") ||
+			//strings.Contains(v.FileName, "EdgeAgent_") {
 
 		} else {
 			continue
@@ -120,7 +125,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 			return errUnZip
 		}
 		// modfiy broker in mqtt config
-		fmt.Println("配置您的broker到您: ", unZipDir, " 目录下的mqtt.conf文件中。")
+		// fmt.Println("配置您的broker到您: ", unZipDir, " 目录下的mqtt.conf文件中。")
 		config, errConfigNew := ConfigNew(s.brokerStr, unZipDir)
 		if errConfigNew != nil {
 			fmt.Println("errConfigNew: ", errConfigNew.Error())
@@ -132,7 +137,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 
 		// get broker sk file
-		fmt.Println("获取您的broker上的device.sk文件到您: ", unZipDir, " 目录下。")
+		// fmt.Println("获取您的broker上的device.sk文件到您: ", unZipDir, " 目录下。")
 		errSk := utils.GetSk(s.brokerStr, unZipDir)
 		if errSk != nil {
 			fmt.Println("errSk: ", errSk.Error())
@@ -143,6 +148,17 @@ func (s *smoke) process(build gojenkins.Build) error {
 				}
 			}
 			return errors.New("download device.sk failed, please special a device.sk")
+		}
+
+		// update autosmoke config file for bacnet profinet opcda
+		if !utils.FileIsExisted("mqtt.conf") {
+			_, _ = utils.CopyFile(unZipDir+"/mqtt.conf", "./mqtt.conf")
+		}
+		if !utils.FileIsExisted("device.sk") {
+			_, _ = utils.CopyFile(unZipDir+"/device.sk", "./device.sk")
+		}
+		if !utils.FileIsExisted("server.crt") {
+			_, _ = utils.CopyFile("config/server.crt", "./server.crt")
 		}
 
 		// get all file in download zip
@@ -233,19 +249,19 @@ func (s *smoke) process(build gojenkins.Build) error {
 					s.result[fileArr[0]] = "FAIL"
 				}
 			} else if s.jobStr == "LeapEdge.workerSign" {
-				//data, err := ioutil.ReadFile(unZipDir + "/stream.log")
-				//if err != nil {
-				//	//return err
-				//	continue
-				//}
-				//if strings.Contains(string(data), "onOut") {
-				//	fmt.Println("PASS	可以正常capture data。")
-				//	s.result[fileArr[0]] = "PASS"
-				//	passCount += 1
-				//} else {
-				//	fmt.Println("FAIL	未能正常capture data。")
-				//	s.result[fileArr[0]] = "FAIL"
-				//}
+				data, err := ioutil.ReadFile(unZipDir + "/stream.log")
+				if err != nil {
+					//return err
+					continue
+				}
+				if strings.Contains(string(data), "onOut") {
+					fmt.Println("PASS	可以正常capture data。")
+					s.result[fileArr[0]] = "PASS"
+					passCount += 1
+				} else {
+					fmt.Println("FAIL	未能正常capture data。")
+					s.result[fileArr[0]] = "FAIL"
+				}
 			}
 
 		//} else {
@@ -322,9 +338,9 @@ func (s *smoke) processWorker(file os.FileInfo, unZipDir string) error {
 		if file.IsDir() {
 			continue
 		} else {
-			bina := strings.Split(unZipDir, "/")
+			bin := strings.Split(unZipDir, "/")
 			//if strings.Contains(file.Name(), bina[1]) {
-			if strings.Compare(file.Name(), bina[1]) == 0 {
+			if strings.Compare(file.Name(), bin[1]) == 0 {
 				var errWorkerNew error
 				s.wk, errWorkerNew = WorkerNew(unZipDir, file, s.runtime)
 				if errWorkerNew != nil {

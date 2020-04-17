@@ -27,7 +27,7 @@ func (m *mail) SendMail(msg string) error {
 	// 邮件主题
 	e.Subject = m.sub
 	// 解析html模板
-	t, err := template.ParseFiles("email-template.html")
+	t, err := template.ParseFiles("config/email-template.html")
 	if err != nil {
 		return err
 	}

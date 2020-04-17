@@ -21,18 +21,11 @@ func (w *worker) startWorker() error {
 		fmt.Println("errGetwd: ", errGetPwd.Error())
 		return errGetPwd
 	}
+
 	bina := strings.Split(w.workerDir, "/")
-	_, errIn := utils.CopyFile(w.workerDir + "/input.conf", "config/"+bina[1]+"/input.conf", )
-	if errIn != nil {
-		fmt.Println("copy input.conf err in worker: ", bina[1], " arch: ", bina[2])
-	}
-	_, errOut := utils.CopyFile(w.workerDir + "/output.conf", "config/"+bina[1]+"/output.conf")
-	if errOut != nil {
-		fmt.Println("copy output.conf err in worker: ", bina[1], " arch: ", bina[2])
-	}
-	_, errOther := utils.CopyFile(w.workerDir + "/other.conf", "config/"+bina[1]+"/other.conf")
-	if errOther != nil {
-		fmt.Println("copy other.conf err in worker: ", bina[1], " arch: ", bina[2])
+	errCopyConfig := utils.CopyDir("config/"+bina[1], w.workerDir)
+	if errCopyConfig != nil {
+		fmt.Println("copy ", bina[1], " config file err: ", errCopyConfig.Error())
 	}
 
 	errChdir := os.Chdir(w.workerDir)
@@ -44,6 +37,14 @@ func (w *worker) startWorker() error {
 	if errChmod != nil {
 		fmt.Println("errChmod: ", errChmod.Error())
 		return errChmod
+	}
+
+	if w.binaryFile.Name() == "filebeat" {
+		errChmod := os.Chmod("fb", 0755)
+		if errChmod != nil {
+			fmt.Println("errChmod: ", errChmod.Error())
+			return errChmod
+		}
 	}
 
 	// start
@@ -82,6 +83,21 @@ func (w *worker) startWorker() error {
 	}
 
 	go utils.ReadStderr(w.workerDir, read, write)
+	if w.binaryFile.Name() == "filebeat" {
+		f, errOpen := os.OpenFile(w.workerDir+"/a.log", os.O_WRONLY|os.O_APPEND, 0666)
+		if errOpen != nil {
+			fmt.Println("filebeat open a.log err: ", errOpen.Error())
+		} else {
+			_, errWrite := f.Write([]byte("hello world!!!\n"))
+			if errWrite != nil {
+				fmt.Println("filebeat write string err: ", errWrite)
+			}
+			_, errWrite = f.Write([]byte("hello world&&&\n"))
+			if errWrite != nil {
+				fmt.Println("filebeat write string err: ", errWrite)
+			}
+		}
+	}
 	go utils.StopProcess(pro, w.runtime)
 	ps, errWait := pro.Wait()
 	if errWait != nil {
