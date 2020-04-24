@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
+	"github.com/json-iterator/go"
 	"github.com/go_sample/src/tsfile/common/log"
+	"time"
 )
 
 type request struct {
@@ -19,7 +21,12 @@ func main(){
 	data, _ := json.Marshal(request1)
 	log.Info("data: %s", string(data))
 	request2 := request{100, "1234567890qwertyuiop", "8888", "223.203.201.251:8200"}
-	json.Unmarshal(data, &request2)
+	var jsyao = jsoniter.ConfigCompatibleWithStandardLibrary
+	t1 := time.Now()
+	jsyao.Unmarshal(data, &request2)
+	//json.Unmarshal(data, &request2)
+	nano := time.Since(t1)
+	log.Info("nano: ", nano)
 }
 
 func main1() {

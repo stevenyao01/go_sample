@@ -27,6 +27,7 @@ type smoke struct {
 	config         *config
 	ml             *mail
 	result         map[string]string
+	wk 			   *worker
 }
 
 func (s *smoke) Start() error {
@@ -50,8 +51,8 @@ func (s *smoke) Start() error {
 	for k, v := range s.result{
 		content.WriteString(k + " : " + v + "\n")
 		target := strings.Split(k, "_")
-		atStr := target[0] + target[1] + target[2]
-		attachFile[i] = s.localPathStr + "/" + atStr + "/" + atStr + ".log"
+		atStr := target[0] + "/" + target[1] + target[2]
+		attachFile[i] = s.localPathStr + "/" + atStr + "/" + target[0] + target[1] + target[2] + ".log"
 		i++
 	}
 	fmt.Println("content: ", content.String())
@@ -60,7 +61,12 @@ func (s *smoke) Start() error {
 		fmt.Println("errSendMailToMonitor: ", errSendMailToMonitor.Error())
 		return errSendMailToMonitor
 	}
-	fmt.Println("所有平台测试完毕，请查收邮件结果。")
+	if strings.Compare(s.jobStr, "LeapEdge.agentSign") == 0 {
+		fmt.Println("所有平台测试完毕，请查收邮件结果。")
+	} else {
+		fmt.Println("(linux, amd64)平台测试完毕，请查收邮件结果。")
+	}
+
 
 	return nil
 }
@@ -85,16 +91,42 @@ func (s *smoke) process(build gojenkins.Build) error {
 		if len(dirArr) != 3 {
 			continue
 		}
-		unZipPath := dirArr[0] + dirArr[1] + dirArr[2]
+		unZipPath := dirArr[0] + "/" + dirArr[1] + dirArr[2]
 		unZipDir := s.localPathStr + "/" + unZipPath
-		fmt.Println("为您下载: ", dirArr[0], "(os:", dirArr[1], ", arch:", dirArr[2], ") 到您的", unZipPath, "目录下。")
+		// fmt.Println("为您下载: ", dirArr[0], "(os:", dirArr[1], ", arch:", dirArr[2], ") 到您的", unZipPath, "目录下。")
+		if strings.Contains(v.FileName, "modbus_linux_amd64") ||
+			strings.Contains(v.FileName, "opcua_linux_amd64") ||
+			strings.Contains(v.FileName, "opcda_linux_amd64") ||
+			strings.Contains(v.FileName, "profinet_linux_amd64") ||
+			strings.Contains(v.FileName, "bacnet_linux_amd64") ||
+			strings.Contains(v.FileName, "melsec_linux_amd64") ||
+			strings.Contains(v.FileName, "iec104_linux_amd64") ||
+			strings.Contains(v.FileName, "fins_linux_amd64") ||
+			strings.Contains(v.FileName, "mewtocol_linux_amd64") ||
+			strings.Contains(v.FileName, "filebeat_linux_amd64") ||
+			strings.Contains(v.FileName, "EdgeAgent_") {
+			//|| strings.Contains(v.FileName, "modbus_linux_amd32") ||
+			//strings.Contains(v.FileName, "opcua_linux_amd32") ||
+			//strings.Contains(v.FileName, "opcda_linux_amd32") ||
+			//strings.Contains(v.FileName, "profinet_linux_amd32") ||
+			//strings.Contains(v.FileName, "bacnet_linux_amd32") ||
+			//strings.Contains(v.FileName, "melsec_linux_amd32") ||
+			//strings.Contains(v.FileName, "iec104_linux_amd32") ||
+			//strings.Contains(v.FileName, "fins_linux_amd32") ||
+			//strings.Contains(v.FileName, "mewtocol_linux_amd32") ||
+			//strings.Contains(v.FileName, "filebeat_linux_amd32") ||
+			//strings.Contains(v.FileName, "EdgeAgent_") {
+
+		} else {
+			continue
+		}
 		errUnZip := utils.UnzipFile(s.localPathStr+"/"+v.FileName, unZipDir)
 		if errUnZip != nil {
 			fmt.Println("unzip file err: ", errUnZip)
 			return errUnZip
 		}
 		// modfiy broker in mqtt config
-		fmt.Println("配置您的broker到您: ", unZipDir, " 目录下的mqtt.conf文件中。")
+		// fmt.Println("配置您的broker到您: ", unZipDir, " 目录下的mqtt.conf文件中。")
 		config, errConfigNew := ConfigNew(s.brokerStr, unZipDir)
 		if errConfigNew != nil {
 			fmt.Println("errConfigNew: ", errConfigNew.Error())
@@ -106,7 +138,7 @@ func (s *smoke) process(build gojenkins.Build) error {
 		}
 
 		// get broker sk file
-		fmt.Println("获取您的broker上的device.sk文件到您: ", unZipDir, " 目录下。")
+		// fmt.Println("获取您的broker上的device.sk文件到您: ", unZipDir, " 目录下。")
 		errSk := utils.GetSk(s.brokerStr, unZipDir)
 		if errSk != nil {
 			fmt.Println("errSk: ", errSk.Error())
@@ -117,6 +149,17 @@ func (s *smoke) process(build gojenkins.Build) error {
 				}
 			}
 			return errors.New("download device.sk failed, please special a device.sk")
+		}
+
+		// update autosmoke config file for bacnet profinet opcda
+		if !utils.FileIsExisted("mqtt.conf") {
+			_, _ = utils.CopyFile(unZipDir+"/mqtt.conf", "./mqtt.conf")
+		}
+		if !utils.FileIsExisted("device.sk") {
+			_, _ = utils.CopyFile(unZipDir+"/device.sk", "./device.sk")
+		}
+		if !utils.FileIsExisted("server.crt") {
+			_, _ = utils.CopyFile("config/server.crt", "./server.crt")
 		}
 
 		// get all file in download zip
@@ -130,54 +173,106 @@ func (s *smoke) process(build gojenkins.Build) error {
 			} else {
 				if s.jobStr == "LeapEdge.agentSign" {
 					if strings.Contains(file.Name(), "EdgeAgent_") {
-						if strings.Contains(file.Name(), "windows") {
-							fmt.Println("暂时不支持windows，待续。。。")
-							continue
-						}
+						//if strings.Contains(file.Name(), "windows") {
+						//	fmt.Println("暂时不支持windows，待续。。。")
+						//	continue
+						//}
 						errProcessAgent := s.processAgent(file, unZipDir)
 						if errProcessAgent != nil {
 							return errProcessAgent
 						}
 					}
 				} else if s.jobStr == "LeapEdge.workerSign" { // TODO process worker
-					if strings.Contains(file.Name(), "EdgeAgent_") {
-						errProcessAgent := s.processWorker(file, unZipDir)
-						if errProcessAgent != nil {
-							return errProcessAgent
-						}
-					} else {
+					if strings.Compare(file.Name(), "modbus") == 0 ||
+						strings.Compare(file.Name(), "opcua") == 0 ||
+						strings.Compare(file.Name(), "opcda") == 0 ||
+						strings.Compare(file.Name(), "profinet") == 0 ||
+						strings.Compare(file.Name(), "bacnet") == 0 ||
+						strings.Compare(file.Name(), "melsec") == 0 ||
+						strings.Compare(file.Name(), "iec104") == 0 ||
+						strings.Compare(file.Name(), "fins") == 0 ||
+						strings.Compare(file.Name(), "mewtocol") == 0 ||
+						strings.Compare(file.Name(), "filebeat") == 0 {
+
+						//strings.Contains(file.Name(), "opcua_linux_amd64") ||
+						//strings.Contains(file.Name(), "opcda_linux_amd64") ||
+						//strings.Contains(file.Name(), "profinet_linux_amd64") ||
+						//strings.Contains(file.Name(), "bacnet_linux_amd64") ||
+						//strings.Contains(file.Name(), "melsec_linux_amd64") ||
+						//strings.Contains(file.Name(), "iec104_linux_amd64") ||
+						//strings.Contains(file.Name(), "fins_linux_amd64") ||
+						//strings.Contains(file.Name(), "mewtocol_linux_amd64") ||
+						//strings.Contains(file.Name(), "filebeat_linux_amd64") ||
+						//strings.Contains(file.Name(), "modbus_linux_amd32") ||
+						//strings.Contains(file.Name(), "opcua_linux_amd32") ||
+						//strings.Contains(file.Name(), "opcda_linux_amd32") ||
+						//strings.Contains(file.Name(), "profinet_linux_amd32") ||
+						//strings.Contains(file.Name(), "bacnet_linux_amd32") ||
+						//strings.Contains(file.Name(), "melsec_linux_amd32") ||
+						//strings.Contains(file.Name(), "iec104_linux_amd32") ||
+						//strings.Contains(file.Name(), "fins_linux_amd32") ||
+						//strings.Contains(file.Name(), "mewtocol_linux_amd32") ||
+						//strings.Contains(file.Name(), "filebeat_linux_amd32") {
+					//if strings.Contains(file.Name(), "modbus"){
 						errProcessWorker := s.processWorker(file, unZipDir)
 						if errProcessWorker != nil {
 							return errProcessWorker
 						}
+					} else {
+						continue
 					}
+					// else {
+					//	errProcessWorker := s.processWorker(file, unZipDir)
+					//	if errProcessWorker != nil {
+					//		return errProcessWorker
+					//	}
+					//}
 				}
 
 			}
 		}
 		fmt.Println(dirArr[0], " (os:", dirArr[1]+", arch:"+dirArr[2], ") 处理完毕.")
 		fmt.Println("")
-		if dirArr[1] != "windows" {
-			data, err := ioutil.ReadFile(unZipDir + "/" + unZipPath + ".log")
-			if err != nil {
-				return err
+		//if dirArr[1] != "windows" {
+
+			if s.jobStr == "LeapEdge.agentSign" {
+				data, err := ioutil.ReadFile(unZipDir + "/" + dirArr[0] + dirArr[1] + dirArr[2] + ".log")
+				if err != nil {
+					//return err
+					continue
+				}
+				if strings.Contains(string(data), "heartbeat") {
+					fmt.Println("PASS	可以正常上报心跳。")
+					s.result[fileArr[0]] = "PASS"
+					passCount += 1
+				} else {
+					fmt.Println("FAIL	未能正常上报心跳。")
+					s.result[fileArr[0]] = "FAIL"
+				}
+			} else if s.jobStr == "LeapEdge.workerSign" {
+				data, err := ioutil.ReadFile(unZipDir + "/stream.log")
+				if err != nil {
+					//return err
+					continue
+				}
+				if strings.Contains(string(data), "onOut") {
+					fmt.Println("PASS	可以正常capture data。")
+					s.result[fileArr[0]] = "PASS"
+					passCount += 1
+				} else {
+					fmt.Println("FAIL	未能正常capture data。")
+					s.result[fileArr[0]] = "FAIL"
+				}
 			}
-			if strings.Contains(string(data), "heartbeat") {
-				fmt.Println("PASS	可以正常上报心跳。")
-				s.result[fileArr[0]] = "PASS"
-				passCount += 1
-			} else {
-				fmt.Println("FAIL	未能正常上报心跳。")
-				s.result[fileArr[0]] = "FAIL"
-			}
-		} else {
-			errSaveToFile := utils.SaveToFile([]byte("windows程序无法在ubuntu上运行!!!!"), unZipDir+"/"+unZipPath+".log")
-			if errSaveToFile != nil {
-				fmt.Println("errSaveToFile: ", errSaveToFile.Error())
-			}
-			fmt.Println("FAIL	不能在此平台运行。")
-			s.result[fileArr[0]] = "FAIL"
-		}
+
+		//} else {
+		//	errSaveToFile := utils.SaveToFile([]byte("windows程序无法在ubuntu上运行!!!!"), unZipDir+"/"+unZipPath+".log")
+		//	if errSaveToFile != nil {
+		//		fmt.Println("errSaveToFile: ", errSaveToFile.Error())
+		//	}
+		//	fmt.Println("FAIL	不能在此平台运行。")
+		//	s.result[fileArr[0]] = "FAIL"
+		//}
 		totalCount += 1
 		fmt.Println("")
 		fmt.Println("")
@@ -234,7 +329,6 @@ func (s *smoke) processAgent(file os.FileInfo, unZipDir string) error {
 }
 
 func (s *smoke) processWorker(file os.FileInfo, unZipDir string) error {
-	fmt.Println("file: ", file.Name())
 	// get agent, add exec right, start it.
 	files, errReadFile := ioutil.ReadDir(unZipDir)
 	//读取目录下文件
@@ -245,18 +339,19 @@ func (s *smoke) processWorker(file os.FileInfo, unZipDir string) error {
 		if file.IsDir() {
 			continue
 		} else {
-			if strings.Contains(file.Name(), "EdgeAgent_") {
-				fmt.Println("file: ", file.Name())
+			bin := strings.Split(unZipDir, "/")
+			//if strings.Contains(file.Name(), bina[1]) {
+			if strings.Compare(file.Name(), bin[1]) == 0 {
 				var errWorkerNew error
-				s.ag, errWorkerNew = WorkerNew(unZipDir, file)
+				s.wk, errWorkerNew = WorkerNew(unZipDir, file, s.runtime)
 				if errWorkerNew != nil {
 					fmt.Println("errWorkerNew: ", errWorkerNew.Error())
 					return errWorkerNew
 				}
 
-				errStartWorker := s.ag.startWorker()
+				errStartWorker := s.wk.startWorker()
 				if errStartWorker != nil {
-					log.Println("errStartAgent: ", errStartWorker.Error())
+					log.Println("errStartWorker: ", errStartWorker.Error())
 					return errStartWorker
 				}
 			}

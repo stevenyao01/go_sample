@@ -5,6 +5,7 @@ import (
 	"github.com/go_sample/src/autosmoke/utils"
 	"log"
 	"os"
+	"strings"
 )
 
 type agent struct {
@@ -43,8 +44,14 @@ func (a *agent) startAgent() error {
 	}
 	//p, err := os.StartProcess(binary, []string{binary, "-c", local, "-d", inout, "-o", other}, attr)
 	binary := a.binaryFile.Name()
-	pro, err := os.StartProcess(binary, []string{binary}, attr)
-	if err != nil {
+	var pro *os.Process
+	var errStart error
+	if strings.Contains(a.agentDir, "windows") {
+		pro, errStart = os.StartProcess("/usr/bin/wine", []string{"wine", binary}, attr)
+	}else {
+		pro, errStart = os.StartProcess(binary, []string{binary}, attr)
+	}
+	if errStart != nil {
 		if err := read.Close(); err != nil {
 			log.Println("close pipe read error:", err.Error())
 		}
@@ -58,6 +65,8 @@ func (a *agent) startAgent() error {
 		fmt.Println("errChdir: ", errRetChdir.Error())
 		return errRetChdir
 	}
+
+	log.Println("agentDir: ", a.agentDir)
 	go utils.ReadStderr(a.agentDir, read, write)
 	go utils.StopProcess(pro, a.runtime)
 	ps, errWait := pro.Wait()

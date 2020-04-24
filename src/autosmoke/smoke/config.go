@@ -51,7 +51,7 @@ func (c *config) modifyConfig() error {
 	// modify local mqtt.conf broker
 	conf, errLoadConfigFile := c.loadConfigFile(c.confPath + "/mqtt.conf")
 	if errLoadConfigFile != nil {
-		fmt.Println("errLoadConfigFile: ", errLoadConfigFile.Error())
+		//fmt.Println("errLoadConfigFile: ", errLoadConfigFile.Error())
 	}
 	//fmt.Println(conf)
 	defaultConfig := map[string]string{
