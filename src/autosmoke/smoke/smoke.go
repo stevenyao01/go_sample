@@ -103,7 +103,8 @@ func (s *smoke) process(build gojenkins.Build) error {
 			strings.Contains(v.FileName, "iec104_linux_amd64") ||
 			strings.Contains(v.FileName, "fins_linux_amd64") ||
 			strings.Contains(v.FileName, "mewtocol_linux_amd64") ||
-			strings.Contains(v.FileName, "filebeat_linux_amd64") {
+			strings.Contains(v.FileName, "filebeat_linux_amd64") ||
+			strings.Contains(v.FileName, "EdgeAgent_") {
 			//|| strings.Contains(v.FileName, "modbus_linux_amd32") ||
 			//strings.Contains(v.FileName, "opcua_linux_amd32") ||
 			//strings.Contains(v.FileName, "opcda_linux_amd32") ||
