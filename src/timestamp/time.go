@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"time"
@@ -8,7 +9,7 @@ import (
 	//"github.com/mqtt/utils/log"
 )
 
-func main() {
+func main2() {
 	for {
 		//时间戳
 		t := time.Now().Unix()
@@ -54,7 +55,10 @@ func main() {
 	//log.Info("retArray: %s", retArry[0])
 }
 
-func main1() {
+func main() {
+	var bBuf bytes.Buffer
+	fmt.Println("bBuf size: ", bBuf.Len())
+
 	t := time.Now()
 	//fmt.Println(t)
 	//
@@ -64,7 +68,11 @@ func main1() {
 
 	timestamp := strconv.FormatInt(t.UTC().UnixNano(), 10)
 	//timestamp := strconv.FormatInt(t.UTC()., 10)
-	fmt.Println(timestamp)
+	retStr := subString(timestamp, 0, 13)
+
+	fmt.Println(retStr)
+	//fmt.Println(timestamp)
+
 
 	//timestamp = timestamp[:10]
 	//fmt.Println(timestamp)

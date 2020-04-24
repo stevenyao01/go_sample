@@ -12,8 +12,11 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
+
+const SIGUSR1 = syscall.Signal(0xa)
 
 func GetSk(broker string, dir string) error {
 	strArr := strings.Split(broker, ":")
@@ -81,6 +84,7 @@ func CopyFile(dstName, srcName string) (written int64, err error) {
 }
 
 func StopProcess(p *os.Process, rt string) {
+	_ = p.Signal(SIGUSR1)
 	runTime, errStr := strconv.Atoi(rt)
 	if errStr != nil {
 		fmt.Println("string to int error: ", errStr.Error())

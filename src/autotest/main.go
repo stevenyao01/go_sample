@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"code.google.com/p/mahonia"
 	"errors"
 	"flag"
 	"fmt"
@@ -79,6 +80,11 @@ func main1() {
 }
 
 func main() {
+	data := []byte("hello world!")
+	var dec mahonia.Decoder
+	dec = mahonia.NewDecoder("gbk")
+	retStr := dec.ConvertString(string(data))
+	fmt.Println("retStr: ", retStr)
 	flag.Parse()
 
 	//result := make(map[string]string)
