@@ -4,27 +4,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/json-iterator/go"
 	"github.com/go_sample/src/tsfile/common/log"
+	"github.com/json-iterator/go"
 	"time"
 )
 
 type request struct {
-	Company_id              int             `json:"company_id"`
-	Company_sk              string          `json:"company_sk"`
-	Device_id              	string          `json:"device_id"`
-	Device_desc             string          `json:"device_desc"`
+	CompanyId  int    `json:"company_id"`
+	CompanySk  string `json:"company_sk"`
+	DeviceId   string `json:"device_id"`
+	DeviceDesc string `json:"device_desc"`
 }
 
-func main(){
+func main2(){
 	request1 := request{100000, "1234567890qwertyuiop", "8888", "223.203.201.251:8200"}
 	data, _ := json.Marshal(request1)
 	log.Info("data: %s", string(data))
 	request2 := request{100, "1234567890qwertyuiop", "8888", "223.203.201.251:8200"}
 	var jsyao = jsoniter.ConfigCompatibleWithStandardLibrary
 	t1 := time.Now()
-	jsyao.Unmarshal(data, &request2)
-	//json.Unmarshal(data, &request2)
+	_ = jsyao.Unmarshal(data, &request2)
+	json.Unmarshal(data, &request2)
 	nano := time.Since(t1)
 	log.Info("nano: ", nano)
 }
@@ -64,6 +64,38 @@ func main1() {
 		device_hid := newdi["device_hid"]
 		fmt.Println(device_hid, device_id)
 	}
+
+}
+
+/* define new struct MyStruct for marshal*/
+type MyStruct struct {
+	Key1          string `json:"key1"`
+	Key2          string `json:"key2"`
+	Key3          string `json:"key3"`
+	Key4          string `json:"key4"`
+	ComputingInfo string `json:"computingInfo"`
+}
+
+func main() {
+	ms := new(MyStruct)
+
+	ms.Key1 = "kkey1"
+	ms.Key2 = "kkey2"
+	ms.Key3 = "kkey3"
+	ms.Key4 = "kkey4"
+	//ms.ComputingInfo = "ccccccomputingInfo"
+
+	b, _ := json.Marshal(ms)
+	cnStr := string(b)
+	fmt.Println("cnStr: ", cnStr)
+	cnJson, _ := simplejson.NewJson([]byte(cnStr))
+	cnBody := cnJson.Get("computingInfo")
+	fmt.Println("getStr: ", cnBody)
+
+	cnJson.Del("computingInfo")
+	fmt.Println("cnBody: ", cnJson)
+	str, _ := cnJson.MarshalJSON()
+	fmt.Println("string data", string(str))
 
 }
 

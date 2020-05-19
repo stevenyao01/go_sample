@@ -1,9 +1,19 @@
 package main
 
+/**
+ * @Project: modbus_csdn
+ * @Package Name: modbus
+ * @Author: steven yao
+ * @Email:  yhp.linux@gmail.com
+ * @Create Date: 2020/5/18 下午10:12
+ * @Description:
+ */
+
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/go_sample/src/go-modbus2/modbus"
+	"fmt"
+	"github.com/goburrow/modbus"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,19 +24,6 @@ import (
 
 //
 var gClient modbus.Client
-
-//	gClient.ReadCoils()
-//	gClient.ReadInputRegisters()
-//	gClient.ReadHoldingRegisters()
-//	gClient.ReadDiscreteInputs()
-//
-//	gClient.ReadWriteMultipleRegisters()
-//	gClient.MaskWriteRegister()
-//
-//	gClient.WriteSingleCoil()
-//	gClient.WriteMultipleCoils()
-//	gClient.WriteSingleRegister()
-//	gClient.WriteMultipleRegisters()
 
 // env map
 var EnvMap = map[string]string {
@@ -45,6 +42,7 @@ var EnvMap = map[string]string {
 	"inputregisters_address":"",
 	"inputregisters_operate":"",
 	"inputregisters_operate_len":"0",
+	// config you holdingregisters here
 	"holdingregisters_address":"0",
 	"holdingregisters_operate":"read",
 	"holdingregisters_operate_len":"2",
@@ -117,7 +115,7 @@ func byteToInt(results []byte) int {
 	return x
 }
 
-func initTest() {
+func initConfig() {
 	initConfMap()
 	handler := modbus.NewRTUClientHandler(EnvMap[RtuDevice])
 	baudRate, _ := strconv.Atoi(EnvMap[BaudRate])
@@ -142,44 +140,6 @@ func initTest() {
 
 	gClient = client
 }
-
-func getModbusValue() []string {
-	var i uint16
-	inputLen, _ := strconv.ParseInt(EnvMap[Len], 10, 16)
-	askLen := uint16(inputLen)
-	inputAddr, _ := strconv.Atoi(EnvMap[Address])
-	address := uint16(inputAddr)
-	//log.Println("len: ", len)
-	myS1 := make([]string, askLen)
-	for i=0; i<askLen; i++ {
-		results, err := gClient.ReadHoldingRegisters(address+i, 1)
-		if err != nil {
-			log.Println("err: ", err)
-			return nil
-		}
-
-		a := byteToInt([]uint8{0, 0, 0, results[0]})
-		b := byteToInt([]uint8{0, 0, 0, results[1]})
-		var temperature = float64((a*256)+b) / 100
-		//log.Println("temperature: ", temperature)
-		myS1[i] = strconv.FormatFloat(temperature, 'f', 2, 64)
-	}
-	return myS1
-}
-
-//func getCoils() int32 {
-//	var i uint16
-//	//inputLen, _ := strconv.ParseInt(EnvMap[Len], 10, 16)
-//	inputAddr, _ := strconv.Atoi(EnvMap[Address])
-//	address := uint16(inputAddr)
-//	//log.Println("len: ", len)
-//	results, err := gClient.ReadCoils(address+i, 1)
-//	if err != nil {
-//		log.Println("err: ", err)
-//		return 0
-//	}
-//	return byteToInt(results)
-//}
 
 func getCoils() []string {
 	var i uint16
@@ -233,13 +193,12 @@ func getHoldingRegisters() []string {
 			log.Println("err: ", err)
 			return nil
 		}
-		//signStr := fmt.Sprintf("%x", results)
-		//log.Println("temperature: ", signStr)
-		a := byteToInt([]uint8{0, 0, 0, results[0]})
-		b := byteToInt([]uint8{0, 0, 0, results[1]})
-		var temperature = float64((a*256)+b) / 100
-		//log.Println("temperature: ", temperature)
-		myS1[i] = strconv.FormatFloat(temperature, 'f', 2, 64)
+		signStr := fmt.Sprintf("%x", results)
+
+		// val, _ := strconv.ParseInt(signStr, 16, 10)
+		// log.Println("val: ", val)
+
+		myS1[i] = signStr
 	}
 	return myS1
 }
@@ -265,14 +224,7 @@ func getDiscreteInputs() []string {
 
 func main() {
 
-	initTest()
-
-	//array := getModbusValue()
-	//if array == nil {
-	//	log.Println("read nil from modbus!!!")
-	//} else {
-	//	log.Println("array: ", array)
-	//}
+	initConfig()
 
 	if EnvMap[CoilsAddress] != "" {
 		log.Println("do process coils.")
@@ -332,41 +284,3 @@ func main() {
 		}
 	}
 }
-
-//func temp(){
-//
-//	gClient.ReadCoils()
-//	gClient.ReadInputRegisters()
-//	gClient.ReadHoldingRegisters()
-//	gClient.ReadDiscreteInputs()
-//
-//	gClient.ReadWriteMultipleRegisters()
-//	gClient.MaskWriteRegister()
-//
-//	gClient.WriteSingleCoil()
-//	gClient.WriteMultipleCoils()
-//	gClient.WriteSingleRegister()
-//	gClient.WriteMultipleRegisters()
-//
-//
-//	gClient.ReadFIFOQueue()
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
