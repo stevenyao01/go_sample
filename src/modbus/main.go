@@ -176,23 +176,102 @@ func main() () {
 	c.fix()
 	c.Type = "rtu"
 	c.PollInterval = 5000
-	c.SlaveId = 1
+	c.SlaveId = 2
 	c.Quantity = 2
 	c.ConnTimeout = 5
 	c.Readers = append(c.Readers, Reader{
+		Name: "demo0",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400000",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
 		Name: "demo1",
 		Quantity: 1,
-		SlaveId:  1,
+		SlaveId:  2,
 		Address: "400001",
 		ValueType:TYPE_Int16,
 	})
 	c.Readers = append(c.Readers, Reader{
 		Name: "demo2",
 		Quantity: 1,
-		SlaveId:  1,
+		SlaveId:  2,
 		Address: "400002",
 		ValueType:TYPE_Int16,
 	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo3",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400003",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo4",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400004",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo5",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400005",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo6",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400006",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo7",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400007",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo8",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400008",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo9",
+		Quantity: 1,
+		SlaveId:  1,
+		Address: "400009",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo10",
+		Quantity: 1,
+		SlaveId:  1,
+		Address: "400010",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo11",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400011",
+		ValueType:TYPE_Int16,
+	})
+	c.Readers = append(c.Readers, Reader{
+		Name: "demo12",
+		Quantity: 1,
+		SlaveId:  2,
+		Address: "400012",
+		ValueType:TYPE_Int16,
+	})
+
+
 
 	if err := c.ToFile(configFileName); err != nil {
 		fmt.Println("write to file error: ", err.Error())

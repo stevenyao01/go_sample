@@ -32,7 +32,7 @@ const (
 	defaultQueryInterval = 60
 
 	defaultDevice   = "/dev/ttyUSB0"
-	defaultBaudRate = 9600
+	defaultBaudRate = 4800
 	defaultDataBits = 8
 	defaultParity   = "N"
 	defaultStopBits = 1
