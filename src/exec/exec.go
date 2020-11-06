@@ -23,7 +23,7 @@ func main1() {
     fmt.Println(string(out))
 }
 
-func main() {
+func main6() {
     fmt.Println("enter publish_message main, pid : ", os.Getpid())
     time.Sleep(10 * time.Second)
     fmt.Println("leave publish_message main, pid : ", os.Getpid())

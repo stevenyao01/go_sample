@@ -43,9 +43,9 @@ var EnvMap = map[string]string {
 	"inputregisters_operate":"",
 	"inputregisters_operate_len":"0",
 	// config you holdingregisters here
-	"holdingregisters_address":"13",
+	"holdingregisters_address":"7",
 	"holdingregisters_operate":"read",
-	"holdingregisters_operate_len":"1",
+	"holdingregisters_operate_len":"2",
 	"discreteinputs_address":"",
 	"discreteinputs_operate":"",
 	"discreteinputs_operate_len":"1",

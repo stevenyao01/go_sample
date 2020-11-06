@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-func main() {
+func main3() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cmd := exec.CommandContext(ctx, "ls", "-l")
 	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}

@@ -1,4 +1,4 @@
-package wait
+package main
 
 import (
     "fmt"
@@ -6,7 +6,7 @@ import (
     "time"
 )
  
-func main() {
+func main1() {
   wait := sync.WaitGroup{}
   locker := new(sync.Mutex)
   cond := sync.NewCond(locker)

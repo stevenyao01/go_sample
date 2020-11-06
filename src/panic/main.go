@@ -18,17 +18,35 @@ import (
 
 const coreDumpFilename = "core.dump"
 
+/* define new struct tt2*/
+type tt2 struct {
+	aa string
+	bb int
+}
 
 func myPanic() string {
 	panic("my panic.")
 }
-func main() {
+
+func main (){
+	fmt.Println("before test!!")
+	aa := test()
+	fmt.Println("after test!!  ", aa)
+}
+
+func test() *tt2 {
 	defer func() {
 		err := recover()
+		fmt.Println("enter defer...")
 		_ = coreDump(coreDumpFilename, err)
 	}()
+	fmt.Println("before panic!!")
 	_ = myPanic()
 	fmt.Println("cann't excute here, because panic.")
+	return &tt2{
+		aa: "hello",
+		bb: 12,
+	}
 }
 
 func coreDump(filename string, err interface{}) error {

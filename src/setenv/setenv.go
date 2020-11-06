@@ -16,6 +16,18 @@ import (
  */
 
 func main() {
+	fmt.Println(os.Getenv("JAVA_HOME"))
+	javaHome := os.Getenv("JAVA_HOMEasdfsdfs")
+	if javaHome == "" {
+		fmt.Println("javaHome: ", javaHome)
+	} else {
+		fmt.Println("javaHome2: ", javaHome)
+	}
+
+	err11 := os.Setenv("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:xiaochuanaaaa") //临时设置 系统环境变量
+	if err11 != nil {
+		fmt.Println(err11.Error())
+	}
 	err := os.Setenv("XIAO", "xiaochuanaaaa") //临时设置 系统环境变量
 	if err != nil {
 		fmt.Println(err.Error())

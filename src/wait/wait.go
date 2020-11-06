@@ -1,4 +1,4 @@
-package wait
+package main
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func main1() {
+func main2() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cmd := exec.CommandContext(ctx, "bin/my_exec")
 	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}

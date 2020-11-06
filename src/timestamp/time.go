@@ -56,6 +56,20 @@ func main2() {
 }
 
 func main() {
+
+	/////////////////////
+	sli:=make([]int ,0)
+	for i := 0; i<10;i++  {
+		sli=append(sli, 1)
+	}
+	//for i := 0; i<15;i++  {
+	//	sli[i] = i
+	//}
+	fmt.Println("sli: ", sli)
+	slif := sli[:11]
+	fmt.Println("slif: ", slif)
+	///////////////////
+
 	var bBuf bytes.Buffer
 	fmt.Println("bBuf size: ", bBuf.Len())
 

@@ -76,7 +76,7 @@ type MyStruct struct {
 	ComputingInfo string `json:"computingInfo"`
 }
 
-func main() {
+func main5() {
 	ms := new(MyStruct)
 
 	ms.Key1 = "kkey1"
@@ -96,6 +96,52 @@ func main() {
 	fmt.Println("cnBody: ", cnJson)
 	str, _ := cnJson.MarshalJSON()
 	fmt.Println("string data", string(str))
+
+}
+
+func main() {
+	//拼凑json   body为map数组
+	//var rbody []map[string]interface{}
+	//t := make(map[string]interface{})
+	//t["device_id"] = "dddddd"
+	//t["device_hid"] = "ddddddd"
+	//
+	//rbody = append(rbody, t)
+	//t1 := make(map[string]interface{})
+	//t1["device_id"] = "aaaaa"
+	//t1["device_hid"] = "aaaaa"
+	//
+	//rbody = append(rbody, t1)
+
+	sli:=make([]int ,0)
+	sli = append(sli, 1)
+	sli = append(sli, 2)
+	sli = append(sli, 3)
+
+
+	cnnJson := make(map[string]interface{})
+	cnnJson["agenttime"] = "2342342442"
+	cnnJson["message"] = sli
+	cnnJson["description"] = "get all active worker"
+
+
+	b, _ := json.Marshal(cnnJson)
+	var obj interface{}
+	if err := json.Unmarshal(b, &obj); err != nil {
+		fmt.Println("unmarshal err: ", err.Error())
+	}
+	cnnn := string(b)
+	fmt.Println("cnnn:%s", cnnn)
+	cn_json, _ := simplejson.NewJson([]byte(cnnn))
+	cn_body, _ := cn_json.Get("body").Array()
+
+	for _, di := range cn_body {
+		//就在这里对di进行类型判断
+		newdi, _ := di.(map[string]interface{})
+		device_id := newdi["device_id"]
+		device_hid := newdi["device_hid"]
+		fmt.Println(device_hid, device_id)
+	}
 
 }
 
