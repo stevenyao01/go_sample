@@ -9,19 +9,20 @@ package sdk
  */
 
 import (
-	"github.com/eclipse/paho.mqtt.golang"
-	"encoding/json"
-	"net/http"
-	"strings"
-	"errors"
-	"time"
-	"fmt"
-	"os"
-	"io/ioutil"
-	"strconv"
-	"crypto/x509"
 	"crypto/tls"
-	"github.com/apex/log"
+	"crypto/x509"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/eclipse/paho.mqtt.golang"
+	"io/ioutil"
+	"github.com/agent/log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+	//"github.com/apex/log"
 	"encoding/base64"
 )
 

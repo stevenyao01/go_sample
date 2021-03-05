@@ -24,10 +24,12 @@ func main() {
 		fmt.Println("javaHome2: ", javaHome)
 	}
 
+	fmt.Println(os.Getenv("LD_LIBRARY_PATH"))
 	err11 := os.Setenv("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:xiaochuanaaaa") //临时设置 系统环境变量
 	if err11 != nil {
 		fmt.Println(err11.Error())
 	}
+	fmt.Println(os.Getenv("LD_LIBRARY_PATH"))
 	err := os.Setenv("XIAO", "xiaochuanaaaa") //临时设置 系统环境变量
 	if err != nil {
 		fmt.Println(err.Error())

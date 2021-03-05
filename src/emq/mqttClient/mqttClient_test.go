@@ -57,7 +57,7 @@ func TestSendMessage(t *testing.T) {
 		}
 		defer client.UnInit()
 
-		n, errSendMessage := client.SendMessage("demo", 0, []byte("hello world!!!"))
+		n, errSendMessage := client.SendMessage("agent_876c0b2d-230d-4021-91e4-542a73d9bda4/t3", 0, []byte("hello world!!!"))
 		if errSendMessage != nil {
 			fmt.Println("error: send message error.")
 		}

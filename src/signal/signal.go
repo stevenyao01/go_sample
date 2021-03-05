@@ -22,7 +22,8 @@ func signalListen() {
 	// init os.signal channel
 	c := make(chan os.Signal)
 	// define catch signal
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	//signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(c, syscall.Signal(0xa))
 	for {
 		// wait channel
 		sig := <-c

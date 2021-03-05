@@ -8,7 +8,10 @@ import (
 )
 
 const (
-	broker = "tcp://10.111.103.251:1883"
+	broker = "tcp://172.17.170.234:1883"
+	agentId = "agent_7f5bbb00-b379-4e54-8541-a737ba288988"
+	channel = "t3"
+
 	clientId = "123456654321abc"
 	userName = "my_tests"
 	qos = 0
@@ -29,7 +32,7 @@ func main() {
 		defer client.UnInit()
 
 		for {
-			errRec := client.ReceiveMessage("demo", 0, func(topic string, msg mqtt.Message) {
+			errRec := client.ReceiveMessage(agentId + "/" + channel, 0, func(topic string, msg mqtt.Message) {
 				fmt.Println("yao Topic: ", topic)
 				fmt.Println("yao Msg: ", string(msg.Payload()))
 			})
@@ -38,7 +41,7 @@ func main() {
 			}
 		}
 
-		defer client.UnReceiveMessage("demo")
+		defer client.UnReceiveMessage(agentId + "/" + channel)
 	}
 	time.Sleep(5 * time.Second)
 }

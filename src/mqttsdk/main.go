@@ -15,14 +15,24 @@ import (
  * @Create Date: 18-11-1 上午10:46
  * @Description:
  */
+const (
+	broker = "172.17.170.234:8200"
+	agentId = "agent_7f5bbb00-b379-4e54-8541-a737ba288988"
+	channel = "t3"
+
+	clientId = "123456654321abc"
+	userName = "my_tests"
+	qos = 0
+)
 
 func main() {
 
 	//sdkParams, _ := sdk.NewSdkParams("172.17.171.20:8200", "device.sk", "uuid")
-	sdkParams, _ := sdk.NewSdkParams("172.17.170.225:8200", "device.sk", "uuid")
+	sdkParams, _ := sdk.NewSdkParams(broker, "device.sk", agentId)
 	mqtt, _ := sdk.NewMqtt()
 	mqtt.Init(*sdkParams)
-	mqtt.ReceiveBroadcast("$LEAP/localid", callBackReceiveBroadCast)
+	//mqtt.ReceiveBroadcast("$LEAP/localid", callBackReceiveBroadCast)
+	mqtt.ReceiveBroadcast(agentId + "/" + channel, callBackReceiveBroadCast)
 
 	t := time.Now()
 	timestamp := strconv.FormatInt(t.UTC().UnixNano(), 10)
@@ -34,7 +44,7 @@ func main() {
 		timestamp2 := strconv.FormatInt(t2.UTC().UnixNano(), 10)
 		fmt.Println("send: ", timestamp2)
 		mqtt.Broadcast("$LEAP/localid", []byte("luck you."))
-		//time.Sleep(1 * time.Second)
+		time.Sleep(1 * time.Second)
 		if i >= 10 {
 			break
 		}

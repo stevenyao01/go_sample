@@ -60,7 +60,7 @@ type Client interface {
 // In this method, we'll configure at first.And then connect to the broker
 func (m *MqttClient) Init() error {
 	m.configure()
-	if m.IsConnected() {
+	if !m.IsConnected() {
 		err := m.connect()
 		if err != nil {
 			return err
