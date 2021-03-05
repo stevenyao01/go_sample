@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/go_sample/src/mqtt/mqttSDK"
+)
+
+/**
+ * @Package Name: mqttSDK
+ * @Author: steven yao steven
+ * @Email:  yhp.linux@gmail.com
+ * @Create Date: 2021/1/13 下午5:37
+ * @Description:
+ */
+
+//const(
+//	broker="172.17.170.234:4567"
+//)
+
+
+//var broker = flag.String("broker", "172.17.170.234:4567", "create mqtt.conf and download device.sk.")
+//var sk = flag.String("sk", "./device.sk", "special device.sk.")
+//var agentId = flag.String("agentId", "", "agent uuid.")
+//var channel = flag.String("channel", "", "channel.")
+//var topic = flag.String("topic", "", "topic.")
+
+func main() {
+	//flag.Parse()
+
+	//fmt.Println("broker: ", *broker)
+	//fmt.Println("sk: ", *sk)
+	//fmt.Println("topic: ", *topic)
+	//fmt.Println("agentId: ", *agentId)
+	//fmt.Println("channel: ", *channel)
+
+	fmt.Println("pls operate your edgeserver such as start or stop.")
+	fmt.Println("")
+
+	params := mqttSDK.NewSdkParams("10.159.44.146:4567", "./device.sk", "abc")
+	client := mqttSDK.NewClientGO(params)
+	if err := client.Init(); err != nil {
+		fmt.Println("client init failed: " + err.Error())
+		return
+	}
+	defer client.UnInit()
+
+	for true {
+		err := client.ReceiveBroadcast("agent_0371cbc2-9d41-451e-adcc-531c2d64ff5c/t3", 0, func(topic string, msg mqtt.Message) {
+			fmt.Println("************************sub Topic:", topic)
+			fmt.Println("************************get Topic:", msg.Topic())
+			fmt.Println("Msg:", string(msg.Payload()))
+			fmt.Println("")
+		})
+		if  err != nil {
+			fmt.Println("receive err: ", err.Error())
+		}
+	}
+}
