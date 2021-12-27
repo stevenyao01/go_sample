@@ -1,0 +1,9 @@
+goroutine 1 [running]:
+runtime/debug.Stack(0x5500, 0xc420018300, 0x3)
+	e:/hudson/workspace/LeapEdge.agentSign/go/src/runtime/debug/stack.go:24 +0xa7
+github.com/agent/utils.CoreDump(0x762ed4, 0x9, 0x0, 0x0, 0xc4200001a8, 0xc42016ff30)
+	e:/hudson/workspace/LeapEdge.agentSign/cur/src/github.com/agent/utils/utils.go:334 +0x37
+main.main.func1()
+	e:/hudson/workspace/LeapEdge.agentSign/cur/src/github.com/agent/EdgeAgent.go:14 +0x58
+main.main()
+	e:/hudson/workspace/LeapEdge.agentSign/cur/src/github.com/agent/EdgeAgent.go:22 +0x6f

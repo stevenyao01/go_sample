@@ -1,0 +1,3 @@
+/home/steven/code/c/yao/build/CMakeFiles/rebuild_cache.dir
+/home/steven/code/c/yao/build/CMakeFiles/main.dir
+/home/steven/code/c/yao/build/CMakeFiles/edit_cache.dir
